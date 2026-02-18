@@ -12,5 +12,22 @@ export function useCheckers() {
   const { network } = useStacks();
   const [loading, setLoading] = useState(false);
 
-  return { loading };
+  const createGame = async () => {
+    setLoading(true);
+    try {
+      await openContractCall({
+        network,
+        contractAddress: CONTRACT_ADDRESS,
+        contractName: CONTRACT_NAME,
+        functionName: 'create-game',
+        functionArgs: [],
+        postConditionMode: PostConditionMode.Allow,
+        onFinish: (data) => console.log('Game created:', data),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { createGame, loading };
 }
