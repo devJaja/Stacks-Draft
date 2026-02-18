@@ -13,6 +13,8 @@ export default function Home() {
 
   const BOARD_SIZE = 8;
 
+  const isDarkSquare = (row: number, col: number) => (row + col) % 2 === 1;
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
       <nav className="p-6 flex justify-between items-center border-b border-purple-500/30">
