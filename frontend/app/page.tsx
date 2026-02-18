@@ -113,7 +113,7 @@ export default function Home() {
                 )}
               </div>
               <p className="text-center mt-4 text-sm text-gray-300">
-                Click a piece, then click destination
+                Click a piece, then click destination to make a move
               </p>
             </div>
           </div>
