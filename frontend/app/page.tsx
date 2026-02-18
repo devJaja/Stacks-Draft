@@ -41,7 +41,11 @@ export default function Home() {
             <p className="text-xl text-gray-300 mb-8">Connect your wallet to start playing</p>
           </div>
         ) : (
-          <div>Game content here</div>
+          <div className="flex flex-col lg:flex-row gap-8 items-start justify-center">
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-purple-500/30">
+              <h2 className="text-2xl font-bold mb-4">Game Controls</h2>
+            </div>
+          </div>
         )}
       </div>
     </main>
