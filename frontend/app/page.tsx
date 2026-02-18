@@ -79,7 +79,7 @@ export default function Home() {
                   <button
                     onClick={() => joinGame(gameId)}
                     disabled={loading}
-                    className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 rounded-lg transition"
+                    className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 rounded-lg transition-colors"
                   >
                     {loading ? 'Joining...' : 'Join Game'}
                   </button>
