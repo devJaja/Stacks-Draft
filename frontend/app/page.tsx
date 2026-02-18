@@ -33,6 +33,17 @@ export default function Home() {
           </div>
         )}
       </nav>
+
+      <div className="container mx-auto px-6 py-12">
+        {!isConnected ? (
+          <div className="text-center py-20">
+            <h2 className="text-4xl font-bold mb-4">Welcome to On-Chain Checkers</h2>
+            <p className="text-xl text-gray-300 mb-8">Connect your wallet to start playing</p>
+          </div>
+        ) : (
+          <div>Game content here</div>
+        )}
+      </div>
     </main>
   );
 }
