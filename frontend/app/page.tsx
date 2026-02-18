@@ -41,7 +41,7 @@ export default function Home() {
             <span className="text-sm">{userData?.profile?.stxAddress?.testnet?.slice(0, 8)}...</span>
             <button
               onClick={disconnect}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition text-sm"
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-sm"
             >
               Disconnect
             </button>
