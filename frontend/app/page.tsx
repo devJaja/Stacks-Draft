@@ -4,25 +4,55 @@ import { useStacks } from '@/hooks/useStacks';
 import { useCheckers } from '@/hooks/useCheckers';
 import { useState } from 'react';
 
+const BOARD_SIZE = 8;
+
+const PIECE_SYMBOLS = {
+  0: '',
+  1: '🔴', // Player 1
+  2: '👑', // Player 1 King
+  3: '⚫', // Player 2
+  4: '♛', // Player 2 King
+};
+
 export default function Home() {
   const { isConnected, userData, connectWallet, disconnect } = useStacks();
-  const { createGame, joinGame, makeMove, loading } = useCheckers();
-  
   const [gameId, setGameId] = useState(0);
+  const { createGame, joinGame, makeMove, loading, gameState, boardState, refetch } = useCheckers(gameId);
+  
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
-
-  const BOARD_SIZE = 8;
 
   const isDarkSquare = (row: number, col: number) => (row + col) % 2 === 1;
 
   const handleSquareClick = (row: number, col: number) => {
     const pos = row * 8 + col;
+    const piece = boardState[pos];
+    
     if (selectedSquare === null) {
-      setSelectedSquare(pos);
+      if (piece > 0) {
+        setSelectedSquare(pos);
+      }
     } else {
-      makeMove(gameId, selectedSquare, pos);
-      setSelectedSquare(null);
+      if (pos === selectedSquare) {
+        setSelectedSquare(null);
+      } else {
+        makeMove(selectedSquare, pos);
+        setSelectedSquare(null);
+      }
     }
+  };
+
+  const isMyTurn = () => {
+    if (!gameState || !userData) return false;
+    const myAddress = userData.profile.stxAddress.testnet;
+    return gameState['current-turn'].value === myAddress;
+  };
+
+  const getPlayerRole = () => {
+    if (!gameState || !userData) return null;
+    const myAddress = userData.profile.stxAddress.testnet;
+    if (gameState.player1.value === myAddress) return 'Player 1 (🔴)';
+    if (gameState.player2.value?.value === myAddress) return 'Player 2 (⚫)';
+    return 'Spectator';
   };
 
   return (
@@ -79,11 +109,26 @@ export default function Home() {
                   <button
                     onClick={() => joinGame(gameId)}
                     disabled={loading}
-                    className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 rounded-lg transition-colors"
+                    className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 rounded-lg transition-colors mb-2"
                   >
                     {loading ? 'Joining...' : 'Join Game'}
                   </button>
+                  <button
+                    onClick={refetch}
+                    className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors text-sm"
+                  >
+                    Refresh Game
+                  </button>
                 </div>
+
+                {gameState && (
+                  <div className="mt-6 p-4 bg-black/30 rounded-lg space-y-2 text-sm">
+                    <div><strong>Game ID:</strong> {gameId}</div>
+                    <div><strong>Status:</strong> {gameState['is-active'].value ? '🟢 Active' : '⚪ Waiting'}</div>
+                    <div><strong>Your Role:</strong> {getPlayerRole()}</div>
+                    <div><strong>Turn:</strong> {isMyTurn() ? '✅ Your Turn' : '⏳ Opponent'}</div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -95,6 +140,7 @@ export default function Home() {
                     const pos = row * 8 + col;
                     const dark = isDarkSquare(row, col);
                     const selected = selectedSquare === pos;
+                    const piece = boardState[pos];
                     
                     return (
                       <div
@@ -107,6 +153,7 @@ export default function Home() {
                           transition-all duration-200
                         `}
                       >
+                        {PIECE_SYMBOLS[piece as keyof typeof PIECE_SYMBOLS]}
                       </div>
                     );
                   })
