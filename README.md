@@ -103,9 +103,11 @@ Open [http://localhost:3000](http://localhost:3000)
 - [ ] Add piece rendering from contract state
 - [ ] Real-time game state polling
 - [ ] Move validation preview
+- [ ] Capture animation
 - [ ] Game history/replay
 - [ ] Leaderboard
 - [ ] Tournament mode
+- [ ] Sound effects
 
 ## 📄 License
 
