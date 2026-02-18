@@ -32,7 +32,7 @@ export default function Home() {
         {!isConnected ? (
           <button
             onClick={connectWallet}
-            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition"
+            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
           >
             Connect Wallet
           </button>
