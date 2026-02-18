@@ -44,6 +44,15 @@ export default function Home() {
           <div className="flex flex-col lg:flex-row gap-8 items-start justify-center">
             <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-purple-500/30">
               <h2 className="text-2xl font-bold mb-4">Game Controls</h2>
+              <div className="space-y-4">
+                <button
+                  onClick={createGame}
+                  disabled={loading}
+                  className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 rounded-lg transition"
+                >
+                  {loading ? 'Creating...' : 'Create New Game'}
+                </button>
+              </div>
             </div>
           </div>
         )}
