@@ -21,9 +21,24 @@ export function useStacks() {
     }
   }, []);
 
+  const connectWallet = () => {
+    showConnect({
+      appDetails: {
+        name: 'NFT Draft Game',
+        icon: '/icon.png',
+      },
+      redirectTo: '/',
+      onFinish: () => {
+        setUserData(userSession.loadUserData());
+      },
+      userSession,
+    });
+  };
+
   return {
     userData,
     userSession,
     network,
+    connectWallet,
   };
 }
