@@ -1,9 +1,14 @@
 'use client';
 
 import { useStacks } from '@/hooks/useStacks';
+import { useCheckers } from '@/hooks/useCheckers';
+import { useState } from 'react';
 
 export default function Home() {
   const { isConnected, userData, connectWallet, disconnect } = useStacks();
+  const { createGame, joinGame, makeMove, loading } = useCheckers();
+  
+  const [gameId, setGameId] = useState(0);
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
