@@ -86,6 +86,10 @@ export default function Home() {
                 </div>
               </div>
             </div>
+
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-purple-500/30">
+              <h2 className="text-2xl font-bold mb-4 text-center">Game Board</h2>
+            </div>
           </div>
         )}
       </div>
