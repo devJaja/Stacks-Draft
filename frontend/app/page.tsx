@@ -15,6 +15,16 @@ export default function Home() {
 
   const isDarkSquare = (row: number, col: number) => (row + col) % 2 === 1;
 
+  const handleSquareClick = (row: number, col: number) => {
+    const pos = row * 8 + col;
+    if (selectedSquare === null) {
+      setSelectedSquare(pos);
+    } else {
+      makeMove(gameId, selectedSquare, pos);
+      setSelectedSquare(null);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
       <nav className="p-6 flex justify-between items-center border-b border-purple-500/30">
