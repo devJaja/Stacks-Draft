@@ -89,7 +89,7 @@ export default function Home() {
 
             <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-purple-500/30">
               <h2 className="text-2xl font-bold mb-4 text-center">Game Board</h2>
-              <div className="grid grid-cols-8 gap-0 w-fit mx-auto border-4 border-amber-900">
+              <div className="grid grid-cols-8 gap-0 w-fit mx-auto border-4 border-amber-900 shadow-2xl">
                 {Array.from({ length: BOARD_SIZE }).map((_, row) =>
                   Array.from({ length: BOARD_SIZE }).map((_, col) => {
                     const pos = row * 8 + col;
