@@ -21,11 +21,23 @@ export default function Home() {
   
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
 
+  // Initialize with default pieces if no game loaded
+  const displayBoard = boardState.some(p => p > 0) ? boardState : getDefaultBoard();
+
+  function getDefaultBoard() {
+    const board = Array(64).fill(0);
+    // Player 1 pieces (top)
+    [1, 3, 5, 7, 8, 10, 12, 14, 17, 19, 21, 23].forEach(pos => board[pos] = 1);
+    // Player 2 pieces (bottom)
+    [40, 42, 44, 46, 49, 51, 53, 55, 56, 58, 60, 62].forEach(pos => board[pos] = 3);
+    return board;
+  }
+
   const isDarkSquare = (row: number, col: number) => (row + col) % 2 === 1;
 
   const handleSquareClick = (row: number, col: number) => {
     const pos = row * 8 + col;
-    const piece = boardState[pos];
+    const piece = displayBoard[pos];
     
     if (selectedSquare === null) {
       if (piece > 0) {
@@ -124,9 +136,12 @@ export default function Home() {
                 {gameState && (
                   <div className="mt-6 p-4 bg-black/30 rounded-lg space-y-2 text-sm">
                     <div><strong>Game ID:</strong> {gameId}</div>
-                    <div><strong>Status:</strong> {gameState['is-active'].value ? '🟢 Active' : '⚪ Waiting'}</div>
+                    <div><strong>Status:</strong> {gameState['is-active']?.value ? '🟢 Active' : '⚪ Waiting'}</div>
                     <div><strong>Your Role:</strong> {getPlayerRole()}</div>
                     <div><strong>Turn:</strong> {isMyTurn() ? '✅ Your Turn' : '⏳ Opponent'}</div>
+                    <div className="text-xs text-gray-400">
+                      <strong>Pieces:</strong> {displayBoard.filter(p => p > 0).length} on board
+                    </div>
                   </div>
                 )}
               </div>
@@ -140,7 +155,7 @@ export default function Home() {
                     const pos = row * 8 + col;
                     const dark = isDarkSquare(row, col);
                     const selected = selectedSquare === pos;
-                    const piece = boardState[pos];
+                    const piece = displayBoard[pos];
                     
                     return (
                       <div
@@ -152,6 +167,7 @@ export default function Home() {
                           ${selected ? 'ring-4 ring-yellow-400' : ''}
                           transition-all duration-200
                         `}
+                        title={`Pos: ${pos}, Piece: ${piece}`}
                       >
                         {PIECE_SYMBOLS[piece as keyof typeof PIECE_SYMBOLS]}
                       </div>
