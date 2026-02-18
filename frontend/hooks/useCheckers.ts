@@ -29,5 +29,22 @@ export function useCheckers() {
     }
   };
 
-  return { createGame, loading };
+  const joinGame = async (gameId: number) => {
+    setLoading(true);
+    try {
+      await openContractCall({
+        network,
+        contractAddress: CONTRACT_ADDRESS,
+        contractName: CONTRACT_NAME,
+        functionName: 'join-game',
+        functionArgs: [uintCV(gameId)],
+        postConditionMode: PostConditionMode.Allow,
+        onFinish: (data) => console.log('Joined game:', data),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { createGame, joinGame, loading };
 }
