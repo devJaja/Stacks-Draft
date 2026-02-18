@@ -63,7 +63,7 @@ export default function Home() {
                 <button
                   onClick={createGame}
                   disabled={loading}
-                  className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 rounded-lg transition"
+                  className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 rounded-lg transition-colors"
                 >
                   {loading ? 'Creating...' : 'Create New Game'}
                 </button>
