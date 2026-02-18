@@ -74,7 +74,7 @@ export default function Home() {
                     value={gameId}
                     onChange={(e) => setGameId(Number(e.target.value))}
                     placeholder="Game ID"
-                    className="w-full px-4 py-2 mb-2 bg-black/30 border border-purple-500/50 rounded-lg"
+                    className="w-full px-4 py-2 mb-2 bg-black/30 border border-purple-500/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                   />
                   <button
                     onClick={() => joinGame(gameId)}
