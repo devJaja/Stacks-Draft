@@ -49,7 +49,7 @@ export default function Home() {
         )}
       </nav>
 
-      <div className="container mx-auto px-6 py-12">
+      <div className="container mx-auto px-6 py-12 max-w-7xl">
         {!isConnected ? (
           <div className="text-center py-20">
             <h2 className="text-4xl font-bold mb-4">Welcome to On-Chain Checkers</h2>
