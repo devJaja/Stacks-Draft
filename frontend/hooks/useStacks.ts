@@ -11,6 +11,16 @@ export function useStacks() {
   const [userData, setUserData] = useState<any>(null);
   const [network] = useState(new StacksTestnet());
 
+  useEffect(() => {
+    if (userSession.isSignInPending()) {
+      userSession.handlePendingSignIn().then((data) => {
+        setUserData(data);
+      });
+    } else if (userSession.isUserSignedIn()) {
+      setUserData(userSession.loadUserData());
+    }
+  }, []);
+
   return {
     userData,
     userSession,
