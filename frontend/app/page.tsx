@@ -102,7 +102,7 @@ export default function Home() {
                         onClick={() => dark && handleSquareClick(row, col)}
                         className={`
                           w-16 h-16 flex items-center justify-center text-3xl
-                          ${dark ? 'bg-amber-900 cursor-pointer hover:bg-amber-800' : 'bg-amber-100'}
+                          ${dark ? 'bg-amber-900 cursor-pointer hover:bg-amber-800 active:bg-amber-700' : 'bg-amber-100'}
                           ${selected ? 'ring-4 ring-yellow-400' : ''}
                           transition-all duration-200
                         `}
