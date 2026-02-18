@@ -53,9 +53,11 @@ export function useCheckers(gameId: number) {
         const pieces = Array(64).fill(0);
         Object.keys(board.value).forEach(key => {
           const pos = parseInt(key.replace('p', ''));
-          pieces[pos] = board.value[key].value;
+          const value = board.value[key];
+          pieces[pos] = typeof value === 'object' ? value.value : value;
         });
         setBoardState(pieces);
+        console.log('Board state:', pieces);
       }
     } catch (error) {
       console.error('Error fetching game state:', error);

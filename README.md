@@ -46,23 +46,39 @@ npm install
 
 ### 2. Deploy Contract
 
+**Option A: Using Clarinet (Recommended)**
+
 Install Clarinet:
 ```bash
 curl -L https://github.com/hirosystems/clarinet/releases/download/v2.0.0/clarinet-linux-x64.tar.gz | tar xz
 ```
 
-Deploy to testnet or use Clarinet console for local testing.
+Check contract:
+```bash
+clarinet check
+```
+
+Deploy to testnet:
+```bash
+clarinet deploy --testnet
+```
+
+**Option B: Manual Deployment**
+
+Use the Stacks Explorer or Hiro Platform to deploy `contracts/checkers.clar`
 
 ### 3. Update Contract Address
 
 Edit `frontend/hooks/useCheckers.ts` and update:
 ```typescript
-const CONTRACT_ADDRESS = 'YOUR_CONTRACT_ADDRESS';
+const CONTRACT_ADDRESS = 'YOUR_DEPLOYED_CONTRACT_ADDRESS';
+const CONTRACT_NAME = 'checkers';
 ```
 
 ### 4. Run Development Server
 
 ```bash
+cd frontend
 npm run dev
 ```
 
@@ -71,10 +87,24 @@ Open [http://localhost:3000](http://localhost:3000)
 ## 🎮 How to Play
 
 1. **Connect Wallet** - Use Hiro Wallet or Xverse
-2. **Create Game** - Start a new checkers match
-3. **Join Game** - Second player joins with game ID
-4. **Make Moves** - Click piece, then click destination
-5. **Win** - Capture all opponent pieces or block their moves
+2. **Create Game** - Click "Create New Game" to start a new match
+3. **Share Game ID** - Note the game ID and share with opponent
+4. **Join Game** - Second player enters game ID and clicks "Join Game"
+5. **Make Moves** - Click your piece (🔴 or ⚫), then click destination square
+6. **Capture** - Jump over opponent pieces to capture them
+7. **King Me** - Reach the opposite end to promote your piece to a king (👑 or ♛)
+8. **Win** - Capture all opponent pieces or block their moves
+
+## 🎯 Game Features
+
+- **Real-time Updates** - Board refreshes every 3 seconds automatically
+- **Turn Indicators** - See whose turn it is and your player role
+- **Visual Feedback** - Selected pieces highlighted in yellow
+- **Piece Symbols**:
+  - 🔴 Player 1 regular piece
+  - 👑 Player 1 king
+  - ⚫ Player 2 regular piece
+  - ♛ Player 2 king
 
 ## 🔐 Smart Contract Functions
 
@@ -100,14 +130,15 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## 🚧 Next Steps
 
-- [ ] Add piece rendering from contract state
-- [ ] Real-time game state polling
+- [x] Add piece rendering from contract state
+- [x] Real-time game state polling
 - [ ] Move validation preview
 - [ ] Capture animation
 - [ ] Game history/replay
 - [ ] Leaderboard
 - [ ] Tournament mode
 - [ ] Sound effects
+- [ ] Mobile responsive improvements
 
 ## 📄 License
 
