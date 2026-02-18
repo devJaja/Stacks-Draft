@@ -5,3 +5,6 @@ build
 .env.local
 .DS_Store
 *.log
+settings/Testnet.toml
+settings/Devnet.toml
+settings/Mainnet.toml
