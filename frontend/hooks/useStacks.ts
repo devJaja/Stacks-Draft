@@ -24,7 +24,7 @@ export function useStacks() {
   const connectWallet = () => {
     showConnect({
       appDetails: {
-        name: 'NFT Draft Game',
+        name: 'Checkers on Stacks',
         icon: '/icon.png',
       },
       redirectTo: '/',
