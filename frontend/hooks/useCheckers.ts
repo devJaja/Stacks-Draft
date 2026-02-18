@@ -46,5 +46,22 @@ export function useCheckers() {
     }
   };
 
-  return { createGame, joinGame, loading };
+  const makeMove = async (gameId: number, from: number, to: number) => {
+    setLoading(true);
+    try {
+      await openContractCall({
+        network,
+        contractAddress: CONTRACT_ADDRESS,
+        contractName: CONTRACT_NAME,
+        functionName: 'move',
+        functionArgs: [uintCV(gameId), uintCV(from), uintCV(to)],
+        postConditionMode: PostConditionMode.Allow,
+        onFinish: (data) => console.log('Move made:', data),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { createGame, joinGame, makeMove, loading };
 }
