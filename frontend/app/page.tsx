@@ -52,6 +52,23 @@ export default function Home() {
                 >
                   {loading ? 'Creating...' : 'Create New Game'}
                 </button>
+                
+                <div>
+                  <input
+                    type="number"
+                    value={gameId}
+                    onChange={(e) => setGameId(Number(e.target.value))}
+                    placeholder="Game ID"
+                    className="w-full px-4 py-2 mb-2 bg-black/30 border border-purple-500/50 rounded-lg"
+                  />
+                  <button
+                    onClick={() => joinGame(gameId)}
+                    disabled={loading}
+                    className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 rounded-lg transition"
+                  >
+                    {loading ? 'Joining...' : 'Join Game'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
