@@ -35,10 +35,17 @@ export function useStacks() {
     });
   };
 
+  const disconnect = () => {
+    userSession.signUserOut();
+    setUserData(null);
+  };
+
   return {
     userData,
     userSession,
     network,
     connectWallet,
+    disconnect,
+    isConnected: !!userData,
   };
 }
