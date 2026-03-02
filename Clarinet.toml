@@ -1,6 +1,5 @@
 [project]
 name = "checkers-on-stacks"
-authors = []
 description = "Decentralized Checkers/Draughts game on Stacks blockchain"
 telemetry_enabled = false
 
