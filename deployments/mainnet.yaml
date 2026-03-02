@@ -1,0 +1,10 @@
+---
+plan:
+  batches:
+    - id: 1
+      transactions:
+        - contract-publish:
+            contract-name: checkers
+            expected-sender: deployer
+            cost: 100000
+            path: contracts/checkers.clar
