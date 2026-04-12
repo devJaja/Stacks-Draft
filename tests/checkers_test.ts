@@ -366,3 +366,29 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(102); // err-not-your-turn (owns-piece fails)
   },
 });
+
+Clarinet.test({
+  name: "move: capture removes the jumped-over piece from the board",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    const player2 = accounts.get("wallet_2")!;
+    // Setup: move pieces into capture position
+    // p1 at 17 -> 26, p2 at 40 -> 33, p1 at 26 captures 33 -> 40 (diff=14)
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], player2.address),
+    ]);
+    chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(26)], player1.address),
+    ]);
+    chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], player2.address),
+    ]);
+    // p1 captures: from 26 to 40, mid = (26+40)/2 = 33
+    chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(40)], player1.address),
+    ]);
+    const midPiece = chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(33)], player1.address);
+    midPiece.result.expectUint(0); // captured piece should be gone
+  },
+});
