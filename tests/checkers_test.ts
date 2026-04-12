@@ -418,3 +418,28 @@ Clarinet.test({
     piece.result.expectUint(2); // promoted to king (u2)
   },
 });
+
+Clarinet.test({
+  name: "move: player2 piece promotes to king when reaching row 1 (pos <= 7)",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    const player2 = accounts.get("wallet_2")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], player2.address),
+    ]);
+    // Walk p2 piece from 40 down to pos 5 (row 1)
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], player1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], player2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(24), types.uint(31)], player1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(33), types.uint(26)], player2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(31), types.uint(38)], player1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(19)], player2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(38), types.uint(45)], player1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(19), types.uint(12)], player2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(45), types.uint(52)], player1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(12), types.uint(5)], player2.address)]);
+    const piece = chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(5)], player2.address);
+    piece.result.expectUint(4); // promoted to king (u4)
+  },
+});
