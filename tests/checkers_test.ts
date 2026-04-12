@@ -257,3 +257,19 @@ Clarinet.test({
     toPiece.result.expectUint(1); // p1 piece should be at destination
   },
 });
+
+Clarinet.test({
+  name: "move: turn switches to player2 after player1 moves",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    const player2 = accounts.get("wallet_2")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], player2.address),
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], player1.address),
+    ]);
+    const game = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], player1.address);
+    const gameData = game.result.expectSome().expectTuple();
+    assertEquals(gameData["current-turn"], player2.address);
+  },
+});
