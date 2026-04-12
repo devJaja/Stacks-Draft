@@ -102,3 +102,16 @@ Clarinet.test({
     piece62.result.expectUint(3);
   },
 });
+
+Clarinet.test({
+  name: "create-game: middle board positions are empty after initialization",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+    ]);
+    // pos u30 is in the middle, should be empty (u0)
+    const piece30 = chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(30)], player1.address);
+    piece30.result.expectUint(0);
+  },
+});
