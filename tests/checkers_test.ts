@@ -56,3 +56,17 @@ Clarinet.test({
     assertEquals(gameData["current-turn"], player1.address);
   },
 });
+
+Clarinet.test({
+  name: "create-game: player2 and winner are none on game creation",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+    ]);
+    const game = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], player1.address);
+    const gameData = game.result.expectSome().expectTuple();
+    gameData["player2"].expectNone();
+    gameData["winner"].expectNone();
+  },
+});
