@@ -134,3 +134,18 @@ Clarinet.test({
     block.receipts[0].result.expectOk().expectBool(true);
   },
 });
+
+Clarinet.test({
+  name: "join-game: game becomes active after player2 joins",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    const player2 = accounts.get("wallet_2")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], player2.address),
+    ]);
+    const game = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], player1.address);
+    const gameData = game.result.expectSome().expectTuple();
+    assertEquals(gameData["is-active"], types.bool(true));
+  },
+});
