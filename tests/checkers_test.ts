@@ -289,3 +289,14 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(102); // err-not-your-turn
   },
 });
+
+Clarinet.test({
+  name: "move: fails with err-game-not-found when game id does not exist",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(99), types.uint(17), types.uint(24)], player1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(100); // err-game-not-found
+  },
+});
