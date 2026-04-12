@@ -273,3 +273,19 @@ Clarinet.test({
     assertEquals(gameData["current-turn"], player2.address);
   },
 });
+
+Clarinet.test({
+  name: "move: fails with err-not-your-turn when player2 tries to move first",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    const player2 = accounts.get("wallet_2")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], player2.address),
+    ]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(49), types.uint(42)], player2.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(102); // err-not-your-turn
+  },
+});
