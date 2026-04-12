@@ -227,3 +227,18 @@ Clarinet.test({
     block.receipts[0].result.expectOk().expectBool(true);
   },
 });
+
+Clarinet.test({
+  name: "move: piece is removed from source position after a move",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    const player2 = accounts.get("wallet_2")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], player2.address),
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], player1.address),
+    ]);
+    const fromPiece = chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(17)], player1.address);
+    fromPiece.result.expectUint(0); // source should be empty
+  },
+});
