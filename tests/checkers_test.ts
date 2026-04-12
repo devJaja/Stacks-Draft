@@ -633,3 +633,13 @@ Clarinet.test({
     result.result.expectUint(2); // king
   },
 });
+
+Clarinet.test({
+  name: "get-piece: returns u0 for a position on a nonexistent game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    // No game created, game-id 0 board is empty
+    const result = chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(1)], player1.address);
+    result.result.expectUint(0);
+  },
+});
