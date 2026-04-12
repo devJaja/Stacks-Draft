@@ -465,3 +465,12 @@ Clarinet.test({
 // ============================================================
 // get-game tests
 // ============================================================
+
+Clarinet.test({
+  name: "get-game: returns none for a game id that does not exist",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    const result = chain.callReadOnlyFn("checkers", "get-game", [types.uint(999)], player1.address);
+    result.result.expectNone();
+  },
+});
