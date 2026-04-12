@@ -643,3 +643,21 @@ Clarinet.test({
     result.result.expectUint(0);
   },
 });
+
+Clarinet.test({
+  name: "get-piece: captured piece is gone and returns u0 after a capture move",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    const player2 = accounts.get("wallet_2")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], player2.address),
+    ]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(26)], player1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], player2.address)]);
+    // p1 captures p2 at 33: from 26 to 40, mid = 33
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(40)], player1.address)]);
+    const captured = chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(33)], player1.address);
+    captured.result.expectUint(0);
+  },
+});
