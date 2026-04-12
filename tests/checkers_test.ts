@@ -70,3 +70,19 @@ Clarinet.test({
     gameData["winner"].expectNone();
   },
 });
+
+Clarinet.test({
+  name: "create-game: board is initialized with player1 pieces on rows 1-3",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+    ]);
+    // pos u1 should have a p1 piece (u1)
+    const piece1 = chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(1)], player1.address);
+    piece1.result.expectUint(1);
+    // pos u8 should have a p1 piece (u1)
+    const piece8 = chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(8)], player1.address);
+    piece8.result.expectUint(1);
+  },
+});
