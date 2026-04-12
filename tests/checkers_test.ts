@@ -189,3 +189,20 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(101); // err-game-full
   },
 });
+
+Clarinet.test({
+  name: "join-game: third player cannot join a game that already has two players",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    const player2 = accounts.get("wallet_2")!;
+    const player3 = accounts.get("wallet_3")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], player2.address),
+    ]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], player3.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(101); // err-game-full
+  },
+});
