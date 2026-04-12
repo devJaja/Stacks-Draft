@@ -300,3 +300,18 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(100); // err-game-not-found
   },
 });
+
+Clarinet.test({
+  name: "move: fails with err-game-over when game is not yet active",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+    ]);
+    // game has no player2, is-active is false
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], player1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(104); // err-game-over
+  },
+});
