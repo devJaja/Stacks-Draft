@@ -210,3 +210,20 @@ Clarinet.test({
 // ============================================================
 // move tests
 // ============================================================
+
+Clarinet.test({
+  name: "move: player1 can make a valid diagonal move forward",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    const player2 = accounts.get("wallet_2")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], player2.address),
+    ]);
+    // p1 piece at pos 17, move to pos 24 (diff=7, valid diagonal)
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], player1.address),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+  },
+});
