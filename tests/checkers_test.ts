@@ -175,3 +175,17 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(100); // err-game-not-found
   },
 });
+
+Clarinet.test({
+  name: "join-game: player1 cannot join their own game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+    ]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], player1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(101); // err-game-full
+  },
+});
