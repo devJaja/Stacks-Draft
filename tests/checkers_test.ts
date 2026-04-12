@@ -149,3 +149,18 @@ Clarinet.test({
     assertEquals(gameData["is-active"], types.bool(true));
   },
 });
+
+Clarinet.test({
+  name: "join-game: player2 address is stored correctly after joining",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    const player2 = accounts.get("wallet_2")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], player2.address),
+    ]);
+    const game = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], player1.address);
+    const gameData = game.result.expectSome().expectTuple();
+    assertEquals(gameData["player2"].expectSome(), player2.address);
+  },
+});
