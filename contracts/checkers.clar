@@ -178,12 +178,16 @@
   (if (> a b) (- a b) (- b a))
 )
 
+;; Single-step distances on the checkers board (diagonal adjacency)
+(define-constant step-diff-a u7)
+(define-constant step-diff-b u9)
+
 ;; A move is valid if the distance is a single step (7 or 9) or a capture jump (14 or 18)
 (define-private (is-valid-move (from uint) (to uint))
   (let ((diff (abs-diff from to)))
     (or
-      (is-eq diff u7)
-      (is-eq diff u9)
+      (is-eq diff step-diff-a)
+      (is-eq diff step-diff-b)
       (is-eq diff capture-diff-a)
       (is-eq diff capture-diff-b)
     )
