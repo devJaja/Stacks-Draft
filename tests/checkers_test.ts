@@ -518,3 +518,25 @@ Clarinet.test({
     assertEquals(gameData["current-turn"], player2.address);
   },
 });
+
+Clarinet.test({
+  name: "get-game: multiple games are stored independently by game-id",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    const player2 = accounts.get("wallet_2")!;
+    const player3 = accounts.get("wallet_3")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+      Tx.contractCall("checkers", "create-game", [], player3.address),
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], player2.address),
+    ]);
+    const game0 = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], player1.address);
+    const game1 = chain.callReadOnlyFn("checkers", "get-game", [types.uint(1)], player1.address);
+    const data0 = game0.result.expectSome().expectTuple();
+    const data1 = game1.result.expectSome().expectTuple();
+    assertEquals(data0["is-active"], types.bool(true));
+    assertEquals(data1["is-active"], types.bool(false));
+    assertEquals(data0["player1"], player1.address);
+    assertEquals(data1["player1"], player3.address);
+  },
+});
