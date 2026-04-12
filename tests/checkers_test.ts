@@ -474,3 +474,15 @@ Clarinet.test({
     result.result.expectNone();
   },
 });
+
+Clarinet.test({
+  name: "get-game: returns some with correct data for an existing game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+    ]);
+    const result = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], player1.address);
+    result.result.expectSome().expectTuple();
+  },
+});
