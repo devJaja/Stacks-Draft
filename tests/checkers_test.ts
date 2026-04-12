@@ -443,3 +443,21 @@ Clarinet.test({
     piece.result.expectUint(4); // promoted to king (u4)
   },
 });
+
+Clarinet.test({
+  name: "move: alternating turns work correctly across multiple moves",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    const player2 = accounts.get("wallet_2")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], player2.address),
+    ]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], player1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], player2.address)]);
+    // Now it should be player1's turn again
+    const game = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], player1.address);
+    const gameData = game.result.expectSome().expectTuple();
+    assertEquals(gameData["current-turn"], player1.address);
+  },
+});
