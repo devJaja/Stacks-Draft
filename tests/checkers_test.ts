@@ -349,3 +349,20 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(103); // err-invalid-move
   },
 });
+
+Clarinet.test({
+  name: "move: player1 cannot move player2 pieces",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    const player2 = accounts.get("wallet_2")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], player2.address),
+    ]);
+    // pos u40 has a p2 piece, player1 should not be able to move it
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], player1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(102); // err-not-your-turn (owns-piece fails)
+  },
+});
