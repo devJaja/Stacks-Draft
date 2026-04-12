@@ -544,3 +544,15 @@ Clarinet.test({
 // ============================================================
 // get-piece tests
 // ============================================================
+
+Clarinet.test({
+  name: "get-piece: returns u0 for an empty position on a new game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+    ]);
+    const result = chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(30)], player1.address);
+    result.result.expectUint(0);
+  },
+});
