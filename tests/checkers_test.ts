@@ -164,3 +164,14 @@ Clarinet.test({
     assertEquals(gameData["player2"].expectSome(), player2.address);
   },
 });
+
+Clarinet.test({
+  name: "join-game: fails with err-game-not-found when game does not exist",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player2 = accounts.get("wallet_2")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "join-game", [types.uint(99)], player2.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(100); // err-game-not-found
+  },
+});
