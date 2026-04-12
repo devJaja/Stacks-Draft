@@ -119,3 +119,18 @@ Clarinet.test({
 // ============================================================
 // join-game tests
 // ============================================================
+
+Clarinet.test({
+  name: "join-game: player2 can successfully join an existing game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    const player2 = accounts.get("wallet_2")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+    ]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], player2.address),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+  },
+});
