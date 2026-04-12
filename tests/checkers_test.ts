@@ -580,3 +580,16 @@ Clarinet.test({
     result.result.expectUint(3);
   },
 });
+
+Clarinet.test({
+  name: "get-piece: returns u0 for a position that has never been set",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const player1 = accounts.get("wallet_1")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], player1.address),
+    ]);
+    // pos u63 is never set in init-board
+    const result = chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(63)], player1.address);
+    result.result.expectUint(0);
+  },
+});
