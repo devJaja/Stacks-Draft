@@ -67,13 +67,13 @@ clarinet deploy --testnet
 
 Use the Stacks Explorer or Hiro Platform to deploy `contracts/checkers.clar`
 
-### 3. Update Contract Address
+### 3. Contract Address (Mainnet)
 
-Edit `frontend/hooks/useCheckers.ts` and update:
-```typescript
-const CONTRACT_ADDRESS = 'YOUR_DEPLOYED_CONTRACT_ADDRESS';
-const CONTRACT_NAME = 'checkers';
+The contract is deployed on Stacks mainnet:
 ```
+SP2DWWDVSSKZ5X37BBV3RV0GY0A0FFZZESYHEVQZ9.checkers
+```
+Explorer: https://explorer.hiro.so/txid/SP2DWWDVSSKZ5X37BBV3RV0GY0A0FFZZESYHEVQZ9.checkers?chain=mainnet
 
 ### 4. Run Development Server
 
