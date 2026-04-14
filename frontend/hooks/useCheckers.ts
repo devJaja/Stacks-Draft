@@ -57,7 +57,6 @@ export function useCheckers(gameId: number) {
           pieces[pos] = typeof value === 'object' ? value.value : value;
         });
         setBoardState(pieces);
-        console.log('Board state:', pieces);
       }
     } catch (error) {
       console.error('Error fetching game state:', error);
@@ -75,7 +74,6 @@ export function useCheckers(gameId: number) {
         functionArgs: [],
         postConditionMode: PostConditionMode.Allow,
         onFinish: (data) => {
-          console.log('Game created:', data);
           setTimeout(fetchGameState, 2000);
         },
       });
@@ -95,7 +93,6 @@ export function useCheckers(gameId: number) {
         functionArgs: [uintCV(gId)],
         postConditionMode: PostConditionMode.Allow,
         onFinish: (data) => {
-          console.log('Joined game:', data);
           setTimeout(fetchGameState, 2000);
         },
       });
@@ -115,7 +112,6 @@ export function useCheckers(gameId: number) {
         functionArgs: [uintCV(gameId), uintCV(from), uintCV(to)],
         postConditionMode: PostConditionMode.Allow,
         onFinish: (data) => {
-          console.log('Move made:', data);
           setTimeout(fetchGameState, 2000);
         },
       });
