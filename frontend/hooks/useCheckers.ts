@@ -5,7 +5,7 @@ import { openContractCall } from '@stacks/connect';
 import { uintCV, PostConditionMode, cvToJSON, callReadOnlyFunction } from '@stacks/transactions';
 import { useState, useEffect } from 'react';
 
-const CONTRACT_ADDRESS = 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM';
+const CONTRACT_ADDRESS = 'SP2DWWDVSSKZ5X37BBV3RV0GY0A0FFZZESYHEVQZ9';
 const CONTRACT_NAME = 'checkers';
 
 export function useCheckers(gameId: number) {
