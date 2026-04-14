@@ -1,0 +1,41 @@
+=== Interacting with Checkers Contract ===
+Wallet: SP2DWWDVSSKZ5X37BBV3RV0GY0A0FFZZESYHEVQZ9
+
+
+"1. Create game"
+  → (ok u0)
+
+"2. Get game 0"
+  → (some { current-turn: 'ST3N7D4F8TDBNPAN7W6CJ5RGF5DAW5MGHNEGTCR6R, is-active: false, player1: 'ST3N7D4F8TDBNPAN7W6CJ5RGF5DAW5MGHNEGTCR6R, player2: none, winner: none })
+
+"3. Get board"
+  → (ok { p0: u0, p1: u1, p10: u1, p11: u0, p12: u1, p13: u0, p14: u1, p15: u0, p16: u0, p17: u1, p18: u0, p19: u1, p2: u0, p20: u0, p21: u1, p22: u0, p23: u1, p24: u0, p25: u0, p26: u0, p27: u0, p28: u0, p29: u0, p3: u1, p30: u0, p31: u0, p32: u0, p33: u0, p34: u0, p35: u0, p36: u0, p37: u0, p38: u0, p39: u0, p4: u0, p40: u3, p41: u0, p42: u3, p43: u0, p44: u3, p45: u0, p46: u3, p47: u0, p48: u0, p49: u3, p5: u1, p50: u0, p51: u3, p52: u0, p53: u3, p54: u0, p55: u3, p56: u3, p57: u0, p58: u3, p59: u0, p6: u0, p60: u3, p61: u0, p62: u3, p63: u0, p7: u1, p8: u1, p9: u0 })
+
+"4. Piece at 1"
+  → u1
+
+"5. Piece at 3"
+  → u1
+
+"6. Piece at 21"
+  → u1
+
+"7. Piece at 40"
+  → u3
+
+"8. Piece at 56"
+  → u3
+
+"9. Join game"
+  → (ok true)
+
+"10. Move 21->28"
+  → (ok true)
+
+"11. Piece at 28"
+  → u1
+
+"12. Final game state"
+  → (some { current-turn: 'ST3N7D4F8TDBNPAN7W6CJ5RGF5DAW5MGHNEGTCR6R.contract-1, is-active: true, player1: 'ST3N7D4F8TDBNPAN7W6CJ5RGF5DAW5MGHNEGTCR6R, player2: (some 'ST3N7D4F8TDBNPAN7W6CJ5RGF5DAW5MGHNEGTCR6R.contract-1), winner: none })
+
+✅ Completed 12 interactions!
