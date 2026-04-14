@@ -1,21 +1,22 @@
-node_modules
-.next
-dist
-build
-.env.local
-.DS_Store
-*.log
-settings/Testnet.toml
-settings/Devnet.toml
-settings/Mainnet.toml
-
-# Build artifacts
+# Dependencies
 node_modules/
-.next/
 
-# Logs & evidence files
-*.txt
+# Build output
+.next/
+dist/
+build/
+
+# Environment
+.env.local
+.env*.local
+
+# Clarinet secrets
+settings/Mainnet.toml
+settings/Devnet.toml
+
+# Logs
 *.log
 
 # OS
 .DS_Store
+Thumbs.db
