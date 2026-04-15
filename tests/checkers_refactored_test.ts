@@ -304,3 +304,14 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(102);
   },
 });
+
+Clarinet.test({
+  name: "move: returns err-invalid-move (u103) when moving from empty square",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(30), types.uint(37)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(103);
+  },
+});
