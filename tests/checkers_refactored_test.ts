@@ -30,3 +30,20 @@ Clarinet.test({
     block.receipts[0].result.expectOk().expectUint(0);
   },
 });
+
+Clarinet.test({
+  name: "create-game: sequential games receive incrementing ids",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const p2 = accounts.get("wallet_2")!;
+    const p3 = accounts.get("wallet_3")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], p1.address),
+      Tx.contractCall("checkers", "create-game", [], p2.address),
+      Tx.contractCall("checkers", "create-game", [], p3.address),
+    ]);
+    block.receipts[0].result.expectOk().expectUint(0);
+    block.receipts[1].result.expectOk().expectUint(1);
+    block.receipts[2].result.expectOk().expectUint(2);
+  },
+});
