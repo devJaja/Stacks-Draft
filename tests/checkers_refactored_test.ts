@@ -565,3 +565,17 @@ Clarinet.test({
     assertEquals(d1["player1"], p3.address);
   },
 });
+
+// ============================================================
+// get-piece
+// ============================================================
+
+Clarinet.test({
+  name: "get-piece: returns piece-empty (u0) for unset position on new game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(30)], p1.address)
+      .result.expectUint(0);
+  },
+});
