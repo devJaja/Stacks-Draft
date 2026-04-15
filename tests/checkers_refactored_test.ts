@@ -157,3 +157,15 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(100);
   },
 });
+
+Clarinet.test({
+  name: "join-game: returns err-game-full (u101) when player1 tries to join own game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(101);
+  },
+});
