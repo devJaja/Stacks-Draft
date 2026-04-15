@@ -389,3 +389,18 @@ Clarinet.test({
       .result.expectUint(4);
   },
 });
+
+// ============================================================
+// forfeit-game
+// ============================================================
+
+Clarinet.test({
+  name: "forfeit-game: player1 can forfeit and opponent is returned as winner",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "forfeit-game", [types.uint(0)], p1.address),
+    ]);
+    block.receipts[0].result.expectOk().expectPrincipal(p2.address);
+  },
+});
