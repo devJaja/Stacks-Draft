@@ -461,3 +461,15 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(104);
   },
 });
+
+Clarinet.test({
+  name: "forfeit-game: returns err-not-player (u105) when outsider tries to forfeit",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    const outsider = accounts.get("wallet_3")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "forfeit-game", [types.uint(0)], outsider.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(105);
+  },
+});
