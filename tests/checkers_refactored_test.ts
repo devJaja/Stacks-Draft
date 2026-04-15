@@ -47,3 +47,13 @@ Clarinet.test({
     block.receipts[2].result.expectOk().expectUint(2);
   },
 });
+
+Clarinet.test({
+  name: "create-game: new game is inactive until player2 joins",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const game = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address);
+    assertEquals(game.result.expectSome().expectTuple()["is-active"], types.bool(false));
+  },
+});
