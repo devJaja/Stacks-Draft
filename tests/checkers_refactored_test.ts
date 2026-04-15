@@ -485,3 +485,15 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(104); // err-game-over
   },
 });
+
+Clarinet.test({
+  name: "forfeit-game: move is rejected after game is forfeited",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "forfeit-game", [types.uint(0)], p1.address)]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(104); // err-game-over
+  },
+});
