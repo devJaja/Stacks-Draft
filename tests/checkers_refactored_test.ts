@@ -209,3 +209,15 @@ Clarinet.test({
     block.receipts[0].result.expectOk().expectBool(true);
   },
 });
+
+Clarinet.test({
+  name: "move: is-valid-move guard rejects illegal distance (diff != 7,9,14,18)",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    // pos 17 -> 20, diff = 3 — not a legal diagonal
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(20)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(103); // err-invalid-move
+  },
+});
