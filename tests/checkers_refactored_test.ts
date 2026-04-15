@@ -598,3 +598,13 @@ Clarinet.test({
       .result.expectUint(1);
   },
 });
+
+Clarinet.test({
+  name: "get-piece: returns piece-p2 (u3) at a player2 starting position",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(55)], p1.address)
+      .result.expectUint(3);
+  },
+});
