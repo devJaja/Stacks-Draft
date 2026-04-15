@@ -404,3 +404,14 @@ Clarinet.test({
     block.receipts[0].result.expectOk().expectPrincipal(p2.address);
   },
 });
+
+Clarinet.test({
+  name: "forfeit-game: player2 can forfeit and player1 is returned as winner",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "forfeit-game", [types.uint(0)], p2.address),
+    ]);
+    block.receipts[0].result.expectOk().expectPrincipal(p1.address);
+  },
+});
