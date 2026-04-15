@@ -315,3 +315,15 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(103);
   },
 });
+
+Clarinet.test({
+  name: "move: returns err-invalid-move (u103) when destination is occupied",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    // pos 1 and pos 8 both have p1 pieces at start
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(1), types.uint(8)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(103);
+  },
+});
