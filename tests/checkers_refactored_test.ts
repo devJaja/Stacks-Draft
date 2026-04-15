@@ -655,3 +655,13 @@ Clarinet.test({
       .result.expectBool(false);
   },
 });
+
+Clarinet.test({
+  name: "is-king: returns false for an empty square",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    chain.callReadOnlyFn("checkers", "is-king", [types.uint(0), types.uint(30)], p1.address)
+      .result.expectBool(false);
+  },
+});
