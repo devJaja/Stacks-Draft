@@ -81,3 +81,17 @@ Clarinet.test({
     data["winner"].expectNone();
   },
 });
+
+Clarinet.test({
+  name: "create-game: all 12 player1 starting positions hold piece-p1 (u1)",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const p1Positions = [1, 3, 5, 7, 8, 10, 12, 14, 17, 19, 21, 23];
+    for (const pos of p1Positions) {
+      const piece = chain.callReadOnlyFn("checkers", "get-piece",
+        [types.uint(0), types.uint(pos)], p1.address);
+      piece.result.expectUint(1);
+    }
+  },
+});
