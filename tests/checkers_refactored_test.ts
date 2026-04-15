@@ -15,3 +15,18 @@ function setupActiveGame(chain: Chain, accounts: Map<string, Account>): { p1: Ac
   ]);
   return { p1, p2 };
 }
+
+// ============================================================
+// create-game
+// ============================================================
+
+Clarinet.test({
+  name: "create-game: first game returns game-id 0",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], p1.address),
+    ]);
+    block.receipts[0].result.expectOk().expectUint(0);
+  },
+});
