@@ -531,3 +531,15 @@ Clarinet.test({
     assertEquals(data["player2"].expectSome(), p2.address);
   },
 });
+
+Clarinet.test({
+  name: "get-game: reflects winner and is-active false after forfeit",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "forfeit-game", [types.uint(0)], p1.address)]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["is-active"], types.bool(false));
+    assertEquals(data["winner"].expectSome(), p2.address);
+  },
+});
