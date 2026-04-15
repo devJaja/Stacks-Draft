@@ -233,3 +233,15 @@ Clarinet.test({
       .result.expectUint(0);
   },
 });
+
+Clarinet.test({
+  name: "move: destination holds the moved piece after a move",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address),
+    ]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(24)], p1.address)
+      .result.expectUint(1); // piece-p1
+  },
+});
