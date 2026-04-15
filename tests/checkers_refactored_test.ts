@@ -281,3 +281,15 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(100);
   },
 });
+
+Clarinet.test({
+  name: "move: returns err-game-over (u104) when game has no player2 yet",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(104);
+  },
+});
