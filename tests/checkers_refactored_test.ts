@@ -339,3 +339,16 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(102);
   },
 });
+
+Clarinet.test({
+  name: "move: capture-diff-a (diff=14) jump removes the jumped piece",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    // p1: 17->26, p2: 40->33, p1 captures: 26->40 (mid=33, diff=14)
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(26)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(40)], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(33)], p1.address)
+      .result.expectUint(0);
+  },
+});
