@@ -293,3 +293,14 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(104);
   },
 });
+
+Clarinet.test({
+  name: "move: returns err-not-your-turn (u102) when player2 moves first",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p2 } = setupActiveGame(chain, accounts);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(102);
+  },
+});
