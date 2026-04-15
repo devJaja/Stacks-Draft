@@ -57,3 +57,15 @@ Clarinet.test({
     assertEquals(game.result.expectSome().expectTuple()["is-active"], types.bool(false));
   },
 });
+
+Clarinet.test({
+  name: "create-game: creator is stored as player1 with first turn",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["player1"], p1.address);
+    assertEquals(data["current-turn"], p1.address);
+  },
+});
