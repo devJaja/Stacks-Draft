@@ -497,3 +497,16 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(104); // err-game-over
   },
 });
+
+// ============================================================
+// get-game
+// ============================================================
+
+Clarinet.test({
+  name: "get-game: returns none for a game id that does not exist",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectNone();
+  },
+});
