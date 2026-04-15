@@ -1,0 +1,704 @@
+import { Clarinet, Tx, Chain, Account, types } from "https://deno.land/x/clarinet@v1.7.1/index.ts";
+import { assertEquals, assertNotEquals } from "https://deno.land/std@0.170.0/testing/asserts.ts";
+
+// ============================================================
+// Helpers
+// ============================================================
+
+/** Set up an active game between wallet_1 and wallet_2, returns game-id 0 */
+function setupActiveGame(chain: Chain, accounts: Map<string, Account>): { p1: Account; p2: Account } {
+  const p1 = accounts.get("wallet_1")!;
+  const p2 = accounts.get("wallet_2")!;
+  chain.mineBlock([
+    Tx.contractCall("checkers", "create-game", [], p1.address),
+    Tx.contractCall("checkers", "join-game", [types.uint(0)], p2.address),
+  ]);
+  return { p1, p2 };
+}
+
+// ============================================================
+// create-game
+// ============================================================
+
+Clarinet.test({
+  name: "create-game: first game returns game-id 0",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], p1.address),
+    ]);
+    block.receipts[0].result.expectOk().expectUint(0);
+  },
+});
+
+Clarinet.test({
+  name: "create-game: sequential games receive incrementing ids",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const p2 = accounts.get("wallet_2")!;
+    const p3 = accounts.get("wallet_3")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], p1.address),
+      Tx.contractCall("checkers", "create-game", [], p2.address),
+      Tx.contractCall("checkers", "create-game", [], p3.address),
+    ]);
+    block.receipts[0].result.expectOk().expectUint(0);
+    block.receipts[1].result.expectOk().expectUint(1);
+    block.receipts[2].result.expectOk().expectUint(2);
+  },
+});
+
+Clarinet.test({
+  name: "create-game: new game is inactive until player2 joins",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const game = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address);
+    assertEquals(game.result.expectSome().expectTuple()["is-active"], types.bool(false));
+  },
+});
+
+Clarinet.test({
+  name: "create-game: creator is stored as player1 with first turn",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["player1"], p1.address);
+    assertEquals(data["current-turn"], p1.address);
+  },
+});
+
+Clarinet.test({
+  name: "create-game: player2 and winner are none on creation",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    data["player2"].expectNone();
+    data["winner"].expectNone();
+  },
+});
+
+Clarinet.test({
+  name: "create-game: all 12 player1 starting positions hold piece-p1 (u1)",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const p1Positions = [1, 3, 5, 7, 8, 10, 12, 14, 17, 19, 21, 23];
+    for (const pos of p1Positions) {
+      const piece = chain.callReadOnlyFn("checkers", "get-piece",
+        [types.uint(0), types.uint(pos)], p1.address);
+      piece.result.expectUint(1);
+    }
+  },
+});
+
+Clarinet.test({
+  name: "create-game: all 12 player2 starting positions hold piece-p2 (u3)",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const p2Positions = [40, 42, 44, 46, 49, 51, 53, 55, 56, 58, 60, 62];
+    for (const pos of p2Positions) {
+      const piece = chain.callReadOnlyFn("checkers", "get-piece",
+        [types.uint(0), types.uint(pos)], p1.address);
+      piece.result.expectUint(3);
+    }
+  },
+});
+
+// ============================================================
+// join-game
+// ============================================================
+
+Clarinet.test({
+  name: "join-game: player2 joins successfully and receives ok true",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const p2 = accounts.get("wallet_2")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], p2.address),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+  },
+});
+
+Clarinet.test({
+  name: "join-game: game becomes active after player2 joins",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["is-active"], types.bool(true));
+  },
+});
+
+Clarinet.test({
+  name: "join-game: player2 principal is stored correctly in game state",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["player2"].expectSome(), p2.address);
+  },
+});
+
+Clarinet.test({
+  name: "join-game: returns err-game-not-found (u100) for nonexistent game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p2 = accounts.get("wallet_2")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "join-game", [types.uint(42)], p2.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(100);
+  },
+});
+
+Clarinet.test({
+  name: "join-game: returns err-game-full (u101) when player1 tries to join own game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(101);
+  },
+});
+
+Clarinet.test({
+  name: "join-game: returns err-game-full (u101) when a third player tries to join",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    const p3 = accounts.get("wallet_3")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], p3.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(101);
+  },
+});
+
+// ============================================================
+// move
+// ============================================================
+
+Clarinet.test({
+  name: "move: valid step-diff-a (diff=7) move succeeds",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    // pos 17 -> 24, diff = 7
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+  },
+});
+
+Clarinet.test({
+  name: "move: valid step-diff-b (diff=9) move succeeds",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    // pos 17 -> 26, diff = 9
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(26)], p1.address),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+  },
+});
+
+Clarinet.test({
+  name: "move: is-valid-move guard rejects illegal distance (diff != 7,9,14,18)",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    // pos 17 -> 20, diff = 3 — not a legal diagonal
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(20)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(103); // err-invalid-move
+  },
+});
+
+Clarinet.test({
+  name: "move: source position is empty after a move",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address),
+    ]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(17)], p1.address)
+      .result.expectUint(0);
+  },
+});
+
+Clarinet.test({
+  name: "move: destination holds the moved piece after a move",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address),
+    ]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(24)], p1.address)
+      .result.expectUint(1); // piece-p1
+  },
+});
+
+Clarinet.test({
+  name: "move: current-turn switches to player2 after player1 moves",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address),
+    ]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["current-turn"], p2.address);
+  },
+});
+
+Clarinet.test({
+  name: "move: current-turn switches back to player1 after player2 moves",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["current-turn"], p1.address);
+  },
+});
+
+Clarinet.test({
+  name: "move: returns err-game-not-found (u100) for nonexistent game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(99), types.uint(17), types.uint(24)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(100);
+  },
+});
+
+Clarinet.test({
+  name: "move: returns err-game-over (u104) when game has no player2 yet",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(104);
+  },
+});
+
+Clarinet.test({
+  name: "move: returns err-not-your-turn (u102) when player2 moves first",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p2 } = setupActiveGame(chain, accounts);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(102);
+  },
+});
+
+Clarinet.test({
+  name: "move: returns err-invalid-move (u103) when moving from empty square",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(30), types.uint(37)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(103);
+  },
+});
+
+Clarinet.test({
+  name: "move: returns err-invalid-move (u103) when destination is occupied",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    // pos 1 and pos 8 both have p1 pieces at start
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(1), types.uint(8)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(103);
+  },
+});
+
+Clarinet.test({
+  name: "move: returns err-not-your-turn (u102) when player1 moves opponent piece",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    // pos 40 has a p2 piece
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(102);
+  },
+});
+
+Clarinet.test({
+  name: "move: capture-diff-a (diff=14) jump removes the jumped piece",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    // p1: 17->26, p2: 40->33, p1 captures: 26->40 (mid=33, diff=14)
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(26)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(40)], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(33)], p1.address)
+      .result.expectUint(0);
+  },
+});
+
+Clarinet.test({
+  name: "move: p1 piece promotes to piece-p1-king (u2) on reaching promotion-row-p1",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(23), types.uint(30)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(30), types.uint(37)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(33), types.uint(26)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(37), types.uint(44)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(19)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(44), types.uint(51)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(19), types.uint(12)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(51), types.uint(58)], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(58)], p1.address)
+      .result.expectUint(2);
+  },
+});
+
+Clarinet.test({
+  name: "move: p2 piece promotes to piece-p2-king (u4) on reaching promotion-row-p2",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(24), types.uint(31)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(33), types.uint(26)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(31), types.uint(38)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(19)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(38), types.uint(45)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(19), types.uint(12)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(45), types.uint(52)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(12), types.uint(5)], p2.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(5)], p2.address)
+      .result.expectUint(4);
+  },
+});
+
+// ============================================================
+// forfeit-game
+// ============================================================
+
+Clarinet.test({
+  name: "forfeit-game: player1 can forfeit and opponent is returned as winner",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "forfeit-game", [types.uint(0)], p1.address),
+    ]);
+    block.receipts[0].result.expectOk().expectPrincipal(p2.address);
+  },
+});
+
+Clarinet.test({
+  name: "forfeit-game: player2 can forfeit and player1 is returned as winner",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "forfeit-game", [types.uint(0)], p2.address),
+    ]);
+    block.receipts[0].result.expectOk().expectPrincipal(p1.address);
+  },
+});
+
+Clarinet.test({
+  name: "forfeit-game: game is-active becomes false after forfeit",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "forfeit-game", [types.uint(0)], p1.address)]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["is-active"], types.bool(false));
+  },
+});
+
+Clarinet.test({
+  name: "forfeit-game: winner field is set to opponent after forfeit",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "forfeit-game", [types.uint(0)], p1.address)]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["winner"].expectSome(), p2.address);
+  },
+});
+
+Clarinet.test({
+  name: "forfeit-game: returns err-game-not-found (u100) for nonexistent game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "forfeit-game", [types.uint(99)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(100);
+  },
+});
+
+Clarinet.test({
+  name: "forfeit-game: returns err-game-over (u104) when game is not active",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    // Game created but no player2 — is-active is false
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "forfeit-game", [types.uint(0)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(104);
+  },
+});
+
+Clarinet.test({
+  name: "forfeit-game: returns err-not-player (u105) when outsider tries to forfeit",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    const outsider = accounts.get("wallet_3")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "forfeit-game", [types.uint(0)], outsider.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(105);
+  },
+});
+
+Clarinet.test({
+  name: "forfeit-game: forfeited game cannot be forfeited again",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "forfeit-game", [types.uint(0)], p1.address)]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "forfeit-game", [types.uint(0)], p2.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(104); // err-game-over
+  },
+});
+
+Clarinet.test({
+  name: "forfeit-game: move is rejected after game is forfeited",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "forfeit-game", [types.uint(0)], p1.address)]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(104); // err-game-over
+  },
+});
+
+// ============================================================
+// get-game
+// ============================================================
+
+Clarinet.test({
+  name: "get-game: returns none for a game id that does not exist",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectNone();
+  },
+});
+
+Clarinet.test({
+  name: "get-game: returns some tuple for a created game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+  },
+});
+
+Clarinet.test({
+  name: "get-game: reflects is-active and player2 after join",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["is-active"], types.bool(true));
+    assertEquals(data["player2"].expectSome(), p2.address);
+  },
+});
+
+Clarinet.test({
+  name: "get-game: reflects winner and is-active false after forfeit",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "forfeit-game", [types.uint(0)], p1.address)]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["is-active"], types.bool(false));
+    assertEquals(data["winner"].expectSome(), p2.address);
+  },
+});
+
+Clarinet.test({
+  name: "get-game: two games are stored independently by game-id",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const p2 = accounts.get("wallet_2")!;
+    const p3 = accounts.get("wallet_3")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], p1.address),
+      Tx.contractCall("checkers", "create-game", [], p3.address),
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], p2.address),
+    ]);
+    const d0 = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    const d1 = chain.callReadOnlyFn("checkers", "get-game", [types.uint(1)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(d0["is-active"], types.bool(true));
+    assertEquals(d1["is-active"], types.bool(false));
+    assertEquals(d0["player1"], p1.address);
+    assertEquals(d1["player1"], p3.address);
+  },
+});
+
+// ============================================================
+// get-piece
+// ============================================================
+
+Clarinet.test({
+  name: "get-piece: returns piece-empty (u0) for unset position on new game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(30)], p1.address)
+      .result.expectUint(0);
+  },
+});
+
+Clarinet.test({
+  name: "get-piece: returns piece-empty (u0) for any position on nonexistent game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(1)], p1.address)
+      .result.expectUint(0);
+  },
+});
+
+Clarinet.test({
+  name: "get-piece: returns piece-p1 (u1) at a player1 starting position",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(5)], p1.address)
+      .result.expectUint(1);
+  },
+});
+
+Clarinet.test({
+  name: "get-piece: returns piece-p2 (u3) at a player2 starting position",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(55)], p1.address)
+      .result.expectUint(3);
+  },
+});
+
+Clarinet.test({
+  name: "get-piece: reflects piece movement — source empty, destination filled",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(17)], p1.address).result.expectUint(0);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(24)], p1.address).result.expectUint(1);
+  },
+});
+
+Clarinet.test({
+  name: "get-piece: returns piece-empty (u0) at captured piece position after jump",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(26)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(40)], p1.address)]);
+    // mid = (26+40)/2 = 33 — captured piece should be gone
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(33)], p1.address)
+      .result.expectUint(0);
+  },
+});
+
+// ============================================================
+// is-king
+// ============================================================
+
+Clarinet.test({
+  name: "is-king: returns false for a regular piece-p1 on starting position",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    chain.callReadOnlyFn("checkers", "is-king", [types.uint(0), types.uint(1)], p1.address)
+      .result.expectBool(false);
+  },
+});
+
+Clarinet.test({
+  name: "is-king: returns false for a regular piece-p2 on starting position",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    chain.callReadOnlyFn("checkers", "is-king", [types.uint(0), types.uint(40)], p1.address)
+      .result.expectBool(false);
+  },
+});
+
+Clarinet.test({
+  name: "is-king: returns false for an empty square",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    chain.callReadOnlyFn("checkers", "is-king", [types.uint(0), types.uint(30)], p1.address)
+      .result.expectBool(false);
+  },
+});
+
+Clarinet.test({
+  name: "is-king: returns true for piece-p1-king after promotion",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(23), types.uint(30)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(30), types.uint(37)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(33), types.uint(26)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(37), types.uint(44)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(19)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(44), types.uint(51)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(19), types.uint(12)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(51), types.uint(58)], p1.address)]);
+    chain.callReadOnlyFn("checkers", "is-king", [types.uint(0), types.uint(58)], p1.address)
+      .result.expectBool(true);
+  },
+});
+
+Clarinet.test({
+  name: "is-king: returns true for piece-p2-king after promotion",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(24), types.uint(31)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(33), types.uint(26)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(31), types.uint(38)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(19)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(38), types.uint(45)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(19), types.uint(12)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(45), types.uint(52)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(12), types.uint(5)], p2.address)]);
+    chain.callReadOnlyFn("checkers", "is-king", [types.uint(0), types.uint(5)], p2.address)
+      .result.expectBool(true);
+  },
+});
