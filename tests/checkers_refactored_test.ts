@@ -448,3 +448,16 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(100);
   },
 });
+
+Clarinet.test({
+  name: "forfeit-game: returns err-game-over (u104) when game is not active",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    // Game created but no player2 — is-active is false
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "forfeit-game", [types.uint(0)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(104);
+  },
+});
