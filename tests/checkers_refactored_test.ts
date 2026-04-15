@@ -473,3 +473,15 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(105);
   },
 });
+
+Clarinet.test({
+  name: "forfeit-game: forfeited game cannot be forfeited again",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "forfeit-game", [types.uint(0)], p1.address)]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "forfeit-game", [types.uint(0)], p2.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(104); // err-game-over
+  },
+});
