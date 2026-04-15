@@ -197,3 +197,15 @@ Clarinet.test({
     block.receipts[0].result.expectOk().expectBool(true);
   },
 });
+
+Clarinet.test({
+  name: "move: valid step-diff-b (diff=9) move succeeds",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = setupActiveGame(chain, accounts);
+    // pos 17 -> 26, diff = 9
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(26)], p1.address),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+  },
+});
