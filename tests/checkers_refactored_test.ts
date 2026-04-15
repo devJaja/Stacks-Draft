@@ -437,3 +437,14 @@ Clarinet.test({
     assertEquals(data["winner"].expectSome(), p2.address);
   },
 });
+
+Clarinet.test({
+  name: "forfeit-game: returns err-game-not-found (u100) for nonexistent game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "forfeit-game", [types.uint(99)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(100);
+  },
+});
