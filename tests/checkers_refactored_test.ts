@@ -665,3 +665,21 @@ Clarinet.test({
       .result.expectBool(false);
   },
 });
+
+Clarinet.test({
+  name: "is-king: returns true for piece-p1-king after promotion",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = setupActiveGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(23), types.uint(30)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(30), types.uint(37)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(33), types.uint(26)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(37), types.uint(44)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(19)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(44), types.uint(51)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(19), types.uint(12)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(51), types.uint(58)], p1.address)]);
+    chain.callReadOnlyFn("checkers", "is-king", [types.uint(0), types.uint(58)], p1.address)
+      .result.expectBool(true);
+  },
+});
