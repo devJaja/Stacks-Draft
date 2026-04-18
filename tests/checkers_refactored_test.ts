@@ -810,3 +810,39 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(102);
   },
 });
+
+// ============================================================
+// Extended Scenario Test Block 04
+// ============================================================
+
+Clarinet.test({
+  name: "scenario-04: enforce diagonal movement restriction for regular pieces",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const p2 = accounts.get("wallet_2")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], p1.address),
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], p2.address),
+    ]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+  },
+});
+
+Clarinet.test({
+  name: "scenario-04: negative validation for enforce diagonal movement restriction for regular pieces",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const p2 = accounts.get("wallet_2")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], p1.address),
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], p2.address),
+    ]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(102);
+  },
+});
