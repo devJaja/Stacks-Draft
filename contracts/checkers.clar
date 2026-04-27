@@ -250,6 +250,21 @@
   )
 )
 
+;; Allows a player to forfeit an active game
+(define-public (forfeit-game (game-id uint))
+  (let ((game (unwrap! (map-get? games game-id) err-game-not-found)))
+    (asserts! (get is-active game) err-game-over)
+    (asserts! (is-participant game) err-not-player)
+    (let ((opponent (get-opponent game)))
+      (map-set games game-id (merge game {
+        is-active: false,
+        winner:    (some opponent)
+      }))
+      (ok opponent)
+    )
+  )
+)
+
 ;; ============================================================
 ;; Read-only functions
 ;; ============================================================
