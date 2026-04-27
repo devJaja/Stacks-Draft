@@ -163,8 +163,8 @@
 
 (define-private (owns-piece (game {player1: principal, player2: (optional principal), current-turn: principal, winner: (optional principal), is-active: bool}) (piece uint))
   (if (is-eq tx-sender (get player1 game))
-    (or (is-eq piece u1) (is-eq piece u2))
-    (or (is-eq piece u3) (is-eq piece u4))
+    (or (is-eq piece piece-p1) (is-eq piece piece-p1-king))
+    (or (is-eq piece piece-p2) (is-eq piece piece-p2-king))
   )
 )
 
