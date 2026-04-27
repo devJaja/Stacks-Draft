@@ -168,6 +168,18 @@
   )
 )
 
+;; True if the move distance is a legal step or capture jump
+(define-private (is-valid-move (from uint) (to uint))
+  (let ((diff (abs-diff from to)))
+    (or
+      (is-eq diff step-diff-a)
+      (is-eq diff step-diff-b)
+      (is-eq diff capture-diff-a)
+      (is-eq diff capture-diff-b)
+    )
+  )
+)
+
 ;; Returns the absolute difference between two uint values
 (define-private (abs-diff (a uint) (b uint))
   (if (> a b) (- a b) (- b a))
