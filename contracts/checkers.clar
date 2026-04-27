@@ -218,6 +218,18 @@
   )
 )
 
+;; True if tx-sender is either player in the game
+(define-private (is-participant
+  (game {
+    player1: principal, player2: (optional principal),
+    current-turn: principal, winner: (optional principal), is-active: bool
+  }))
+  (or
+    (is-eq tx-sender (get player1 game))
+    (is-eq tx-sender (unwrap-panic (get player2 game)))
+  )
+)
+
 ;; Returns the player whose turn comes next
 (define-private (get-next-player (game {player1: principal, player2: (optional principal), current-turn: principal, winner: (optional principal), is-active: bool}))
   (if (is-eq (get current-turn game) (get player1 game))
