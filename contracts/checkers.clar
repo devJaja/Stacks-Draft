@@ -105,7 +105,7 @@
   (let (
     (game (unwrap! (map-get? games game-id) err-game-not-found))
     (piece (unwrap! (map-get? board {game-id: game-id, pos: from}) err-invalid-move))
-    (target (default-to u0 (map-get? board {game-id: game-id, pos: to})))
+    (target (default-to piece-empty (map-get? board {game-id: game-id, pos: to})))
   )
     (asserts! (get is-active game) err-game-over)
     (asserts! (is-eq tx-sender (get current-turn game)) err-not-your-turn)
