@@ -162,6 +162,7 @@
   )
 )
 
+;; True if tx-sender owns the given piece type
 (define-private (owns-piece (game {player1: principal, player2: (optional principal), current-turn: principal, winner: (optional principal), is-active: bool}) (piece uint))
   (if (is-eq tx-sender (get player1 game))
     (or (is-eq piece piece-p1) (is-eq piece piece-p1-king))
