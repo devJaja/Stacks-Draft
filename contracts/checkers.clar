@@ -179,10 +179,10 @@
 )
 
 (define-private (promote-if-needed (piece uint) (pos uint))
-  (if (and (is-eq piece u1) (>= pos u56))
-    u2
-    (if (and (is-eq piece u3) (<= pos u7))
-      u4
+  (if (and (is-eq piece piece-p1) (>= pos u56))
+    piece-p1-king
+    (if (and (is-eq piece piece-p2) (<= pos u7))
+      piece-p2-king
       piece
     )
   )
