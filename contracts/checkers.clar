@@ -168,6 +168,11 @@
   )
 )
 
+;; Returns the absolute difference between two uint values
+(define-private (abs-diff (a uint) (b uint))
+  (if (> a b) (- a b) (- b a))
+)
+
 (define-private (is-capture (from uint) (to uint))
   (let ((diff (if (> to from) (- to from) (- from to))))
     (or (is-eq diff u14) (is-eq diff u18))
