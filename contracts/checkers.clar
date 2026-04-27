@@ -21,6 +21,10 @@
 (define-constant err-game-over (err u104))
 (define-constant err-not-player (err u105))
 
+;; ============================================================
+;; State variables
+;; ============================================================
+
 (define-data-var game-nonce uint u0)
 
 (define-map games
