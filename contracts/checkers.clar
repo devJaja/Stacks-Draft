@@ -171,6 +171,11 @@
   )
 )
 
+;; True if the position index is within the 8x8 board
+(define-private (is-valid-position (pos uint))
+  (< pos board-size)
+)
+
 ;; True if the move distance is a legal step or capture jump
 (define-private (is-valid-move (from uint) (to uint))
   (let ((diff (abs-diff from to)))
