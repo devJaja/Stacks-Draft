@@ -65,7 +65,7 @@
   }
 )
 
-;; Board: pos -> piece (u0=empty, u1=p1, u2=p1-king, u3=p2, u4=p2-king)
+;; Board: pos -> piece (see piece-type constants above)
 (define-map board
   {game-id: uint, pos: uint}
   uint
