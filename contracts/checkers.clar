@@ -29,6 +29,7 @@
 (define-constant piece-p1 u1)
 (define-constant piece-p1-king u2)
 (define-constant piece-p2 u3)
+(define-constant piece-p2-king u4)
 
 ;; ============================================================
 ;; State variables
