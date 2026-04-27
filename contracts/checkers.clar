@@ -277,6 +277,12 @@
   (default-to piece-empty (map-get? board {game-id: game-id, pos: pos}))
 )
 
+(define-read-only (is-king (game-id uint) (pos uint))
+  (let ((piece (get-piece game-id pos)))
+    (or (is-eq piece piece-p1-king) (is-eq piece piece-p2-king))
+  )
+)
+
 (define-read-only (get-board (game-id uint))
   (ok {
     p0: (get-piece game-id u0), p1: (get-piece game-id u1), p2: (get-piece game-id u2), p3: (get-piece game-id u3),
