@@ -187,6 +187,7 @@
   (if (> a b) (- a b) (- b a))
 )
 
+;; True if the move distance matches a capture/jump span
 (define-private (is-capture (from uint) (to uint))
   (let ((diff (abs-diff from to)))
     (or (is-eq diff capture-diff-a) (is-eq diff capture-diff-b))
