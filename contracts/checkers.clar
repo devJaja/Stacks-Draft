@@ -109,8 +109,8 @@
   )
     (asserts! (get is-active game) err-game-over)
     (asserts! (is-eq tx-sender (get current-turn game)) err-not-your-turn)
-    (asserts! (> piece u0) err-invalid-move)
-    (asserts! (is-eq target u0) err-invalid-move)
+    (asserts! (> piece piece-empty) err-invalid-move)
+    (asserts! (is-eq target piece-empty) err-invalid-move)
     (asserts! (owns-piece game piece) err-not-your-turn)
     
     (let ((promoted (promote-if-needed piece to)))
