@@ -1,0 +1,14 @@
+---
+# Mainnet deployment — contract already deployed
+# Address: SP2DWWDVSSKZ5X37BBV3RV0GY0A0FFZZESYHEVQZ9.checkers
+# Tx: 0x351f7215a3fcf8c132944e198ae34cf09d689c15185485ff33c2d46e14aaa091
+# Block: 6837220 | Bitcoin block: 938552
+plan:
+  batches:
+    - id: 1
+      transactions:
+        - contract-publish:
+            contract-name: checkers
+            expected-sender: deployer
+            cost: 100000
+            path: contracts/checkers.clar
