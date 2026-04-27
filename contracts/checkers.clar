@@ -37,6 +37,7 @@
 
 (define-constant board-size u64)
 (define-constant promotion-row-p1 u56)
+(define-constant promotion-row-p2 u7)
 
 ;; ============================================================
 ;; State variables
