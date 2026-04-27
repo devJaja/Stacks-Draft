@@ -218,6 +218,18 @@
   )
 )
 
+;; Returns the opponent of tx-sender in the game
+(define-private (get-opponent
+  (game {
+    player1: principal, player2: (optional principal),
+    current-turn: principal, winner: (optional principal), is-active: bool
+  }))
+  (if (is-eq tx-sender (get player1 game))
+    (unwrap-panic (get player2 game))
+    (get player1 game)
+  )
+)
+
 ;; True if tx-sender is either player in the game
 (define-private (is-participant
   (game {
