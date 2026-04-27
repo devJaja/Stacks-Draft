@@ -1,5 +1,14 @@
-;; Checkers/Draughts Game Contract
-;; Full on-chain checkers game logic
+;; ============================================================
+;; Checkers / Draughts — On-Chain Game Contract
+;; ============================================================
+;; A fully on-chain two-player checkers game on Stacks.
+;; Supports diagonal moves, captures, king promotion.
+;;
+;; Piece encoding:
+;;   0 = empty, 1 = p1, 2 = p1-king, 3 = p2, 4 = p2-king
+;;
+;; Board layout: flat index 0..63 mapping to an 8x8 grid.
+;; ============================================================
 
 (define-constant err-game-not-found (err u100))
 (define-constant err-game-full (err u101))
