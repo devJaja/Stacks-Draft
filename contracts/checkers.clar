@@ -199,6 +199,7 @@
   (/ (+ from to) u2)
 )
 
+;; Promotes a piece to king if it has reached the opposing back rank
 (define-private (promote-if-needed (piece uint) (pos uint))
   (if (and (is-eq piece piece-p1) (>= pos promotion-row-p1))
     piece-p1-king
