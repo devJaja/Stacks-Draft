@@ -112,6 +112,7 @@
     (asserts! (> piece piece-empty) err-invalid-move)
     (asserts! (is-eq target piece-empty) err-invalid-move)
     (asserts! (owns-piece game piece) err-not-your-turn)
+    (asserts! (is-valid-move from to) err-invalid-move)
     
     (let ((promoted (promote-if-needed piece to)))
       (map-set board {game-id: game-id, pos: to} promoted)
