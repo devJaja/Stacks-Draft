@@ -20,6 +20,7 @@
 (define-constant err-invalid-move (err u103))
 (define-constant err-game-over (err u104))
 (define-constant err-not-player (err u105))
+(define-constant err-invalid-position (err u106))
 
 ;; ============================================================
 ;; Piece-type constants
