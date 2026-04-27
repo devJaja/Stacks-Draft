@@ -38,6 +38,10 @@
 (define-constant board-size u64)
 (define-constant promotion-row-p1 u56)
 (define-constant promotion-row-p2 u7)
+(define-constant step-diff-a u7)
+(define-constant step-diff-b u9)
+(define-constant capture-diff-a u14)
+(define-constant capture-diff-b u18)
 
 ;; ============================================================
 ;; State variables
