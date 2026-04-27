@@ -48,6 +48,10 @@
   uint
 )
 
+;; ============================================================
+;; Public functions
+;; ============================================================
+
 (define-public (create-game)
   (let ((game-id (var-get game-nonce)))
     (map-set games game-id {
