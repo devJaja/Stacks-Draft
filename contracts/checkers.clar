@@ -266,7 +266,11 @@
 )
 
 ;; Returns the player whose turn comes next
-(define-private (get-next-player (game {player1: principal, player2: (optional principal), current-turn: principal, winner: (optional principal), is-active: bool}))
+(define-private (get-next-player
+  (game {
+    player1: principal, player2: (optional principal),
+    current-turn: principal, winner: (optional principal), is-active: bool
+  }))
   (if (is-eq (get current-turn game) (get player1 game))
     (unwrap-panic (get player2 game))
     (get player1 game)
