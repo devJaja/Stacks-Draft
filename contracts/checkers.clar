@@ -115,10 +115,10 @@
     
     (let ((promoted (promote-if-needed piece to)))
       (map-set board {game-id: game-id, pos: to} promoted)
-      (map-set board {game-id: game-id, pos: from} u0)
+      (map-set board {game-id: game-id, pos: from} piece-empty)
       
       (if (is-capture from to)
-        (map-set board {game-id: game-id, pos: (get-mid from to)} u0)
+        (map-set board {game-id: game-id, pos: (get-mid from to)} piece-empty)
         true
       )
       
