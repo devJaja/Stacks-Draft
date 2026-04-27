@@ -194,6 +194,7 @@
   )
 )
 
+;; Returns the midpoint position between two board squares
 (define-private (get-mid (from uint) (to uint))
   (/ (+ from to) u2)
 )
