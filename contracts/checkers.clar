@@ -10,6 +10,10 @@
 ;; Board layout: flat index 0..63 mapping to an 8x8 grid.
 ;; ============================================================
 
+;; ============================================================
+;; Error constants
+;; ============================================================
+
 (define-constant err-game-not-found (err u100))
 (define-constant err-game-full (err u101))
 (define-constant err-not-your-turn (err u102))
