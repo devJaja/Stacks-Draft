@@ -174,8 +174,8 @@
 )
 
 (define-private (is-capture (from uint) (to uint))
-  (let ((diff (if (> to from) (- to from) (- from to))))
-    (or (is-eq diff u14) (is-eq diff u18))
+  (let ((diff (abs-diff from to)))
+    (or (is-eq diff capture-diff-a) (is-eq diff capture-diff-b))
   )
 )
 
