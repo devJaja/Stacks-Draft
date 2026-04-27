@@ -196,6 +196,10 @@
   )
 )
 
+;; ============================================================
+;; Private helpers
+;; ============================================================
+
 ;; True if the position index is within the 8x8 board
 (define-private (is-valid-position (pos uint))
   (< pos board-size)
