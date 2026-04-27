@@ -134,7 +134,19 @@
   )
 )
 
+;; ============================================================
+;; Board initialisation
+;; ============================================================
+
 (define-private (init-board (game-id uint))
+  (begin
+    (init-p1-pieces game-id)
+    (init-p2-pieces game-id)
+  )
+)
+
+;; Player 1 starting positions: rows 1-3
+(define-private (init-p1-pieces (game-id uint))
   (begin
     (map-set board {game-id: game-id, pos: u1} piece-p1)
     (map-set board {game-id: game-id, pos: u3} piece-p1)
@@ -148,7 +160,13 @@
     (map-set board {game-id: game-id, pos: u19} piece-p1)
     (map-set board {game-id: game-id, pos: u21} piece-p1)
     (map-set board {game-id: game-id, pos: u23} piece-p1)
-    
+    true
+  )
+)
+
+;; Player 2 starting positions: rows 6-8
+(define-private (init-p2-pieces (game-id uint))
+  (begin
     (map-set board {game-id: game-id, pos: u40} piece-p2)
     (map-set board {game-id: game-id, pos: u42} piece-p2)
     (map-set board {game-id: game-id, pos: u44} piece-p2)
