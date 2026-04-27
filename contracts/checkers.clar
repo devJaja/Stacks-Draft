@@ -204,7 +204,7 @@
 )
 
 (define-read-only (get-piece (game-id uint) (pos uint))
-  (default-to u0 (map-get? board {game-id: game-id, pos: pos}))
+  (default-to piece-empty (map-get? board {game-id: game-id, pos: pos}))
 )
 
 (define-read-only (get-board (game-id uint))
