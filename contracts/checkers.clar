@@ -27,6 +27,7 @@
 
 (define-constant piece-empty u0)
 (define-constant piece-p1 u1)
+(define-constant piece-p1-king u2)
 
 ;; ============================================================
 ;; State variables
