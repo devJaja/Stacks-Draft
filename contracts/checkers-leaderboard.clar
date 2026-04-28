@@ -74,3 +74,4 @@
 )
 
 ;; Read-only functions
+(define-read-only (get-player-stats (player principal))
