@@ -80,3 +80,6 @@
 
 (define-read-only (get-rating (player principal))
   (let ((stats (map-get? player-stats player)))
+    (match stats s (get rating s) u0)
+  )
+)
