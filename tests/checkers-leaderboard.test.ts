@@ -129,3 +129,7 @@ describe('Stacks Checkers Leaderboard: Registration Tests', () => {
     expect(result).toStrictEqual(Cl.uint(0));
   });
   
+});
+
+describe('Stacks Checkers Leaderboard: Match Result Tests', () => {
+  
