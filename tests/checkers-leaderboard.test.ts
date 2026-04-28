@@ -183,3 +183,9 @@ describe('Stacks Checkers Leaderboard: Match Result Tests', () => {
     expect(s2.value.data['games-played']).toStrictEqual(Cl.uint(1));
   });
   
+  it('should ensure rating does not drop below zero', () => {
+    setAuthorized(WALLET_5, true, DEPLOYER);
+    registerPlayer(WALLET_1);
+    registerPlayer(WALLET_2);
+    
+    // Manually force many losses to test floor logic
