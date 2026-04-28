@@ -44,3 +44,4 @@
     (ok (map-set player-stats tx-sender {
       games-played: u0,
       wins: u0,
+      losses: u0,
