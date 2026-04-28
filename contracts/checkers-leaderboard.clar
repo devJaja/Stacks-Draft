@@ -14,3 +14,6 @@
     wins: uint,
     losses: uint,
     rating: uint
+  }
+)
+
