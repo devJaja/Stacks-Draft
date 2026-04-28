@@ -12,3 +12,4 @@
   {
     games-played: uint,
     wins: uint,
+    losses: uint,
