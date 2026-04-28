@@ -50,3 +50,4 @@
   )
 )
 
+(define-public (record-match (winner principal) (loser principal))
