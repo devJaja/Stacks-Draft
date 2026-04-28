@@ -213,3 +213,11 @@ describe('Stacks Checkers Leaderboard: Match Result Tests', () => {
     expect(rating).toStrictEqual(Cl.uint(INITIAL_RATING + RATING_CHANGE));
   });
   
+  it('should auto-initialize loser if not registered', () => {
+    setAuthorized(WALLET_5, true, DEPLOYER);
+    recordMatch(WALLET_1, WALLET_2, WALLET_5);
+    
+    const rating = getRating(WALLET_2).result;
+    expect(rating).toStrictEqual(Cl.uint(INITIAL_RATING - RATING_CHANGE));
+  });
+  
