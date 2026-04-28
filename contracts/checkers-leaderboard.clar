@@ -38,3 +38,4 @@
   )
 )
 
+(define-public (register-player)
