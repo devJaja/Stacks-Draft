@@ -160,3 +160,14 @@ describe('Stacks Checkers Leaderboard: Match Result Tests', () => {
     expect(stats.value.data['rating']).toStrictEqual(Cl.uint(INITIAL_RATING + RATING_CHANGE));
   });
   
+  it('should correctly increment loser stats and decrement rating', () => {
+    setAuthorized(WALLET_5, true, DEPLOYER);
+    registerPlayer(WALLET_1);
+    registerPlayer(WALLET_2);
+    recordMatch(WALLET_1, WALLET_2, WALLET_5);
+    
+    const stats: any = getPlayerStats(WALLET_2).result;
+    expect(stats.value.data['losses']).toStrictEqual(Cl.uint(1));
+    expect(stats.value.data['rating']).toStrictEqual(Cl.uint(INITIAL_RATING - RATING_CHANGE));
+  });
+  
