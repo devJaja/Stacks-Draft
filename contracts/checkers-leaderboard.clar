@@ -52,3 +52,4 @@
 
 (define-public (record-match (winner principal) (loser principal))
   (let (
+    (caller-authorized (default-to false (map-get? authorized-callers contract-caller)))
