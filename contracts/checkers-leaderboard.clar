@@ -63,3 +63,4 @@
       losses: (get losses winner-stats),
       rating: (+ (get rating winner-stats) u25)
     })
+    (map-set player-stats loser {
