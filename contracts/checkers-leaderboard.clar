@@ -6,3 +6,4 @@
 (define-constant err-already-registered (err u101))
 (define-constant err-not-registered (err u102))
 
+;; Data Maps
