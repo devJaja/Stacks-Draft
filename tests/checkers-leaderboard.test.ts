@@ -289,3 +289,12 @@ describe('Stacks Checkers Leaderboard: Integration Scenarios', () => {
     expect(rating).toStrictEqual(Cl.uint(expected));
   });
   
+  it('should maintain state across different types of interactions', () => {
+    registerPlayer(WALLET_1);
+    setAuthorized(WALLET_2, true, DEPLOYER);
+    recordMatch(WALLET_1, WALLET_3, WALLET_2);
+    
+    const rating = getRating(WALLET_1).result;
+    expect(rating).toStrictEqual(Cl.uint(INITIAL_RATING + RATING_CHANGE));
+  });
+  
