@@ -17,3 +17,8 @@
   }
 )
 
+(define-map authorized-callers
+  principal
+  bool
+)
+
