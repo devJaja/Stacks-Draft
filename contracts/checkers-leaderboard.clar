@@ -30,3 +30,4 @@
   (is-eq tx-sender (var-get contract-owner))
 )
 
+;; Public functions
