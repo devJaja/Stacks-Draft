@@ -21,3 +21,4 @@ trusted_caller = false
 callee_filter = false
 
 [contracts.checkers-leaderboard]
+path = 'contracts/checkers-leaderboard.clar'
