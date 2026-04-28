@@ -197,3 +197,11 @@ describe('Stacks Checkers Leaderboard: Match Result Tests', () => {
     expect(rating).toStrictEqual(Cl.uint(0));
   });
   
+  it('should fail recording if caller was de-authorized', () => {
+    setAuthorized(WALLET_5, true, DEPLOYER);
+    setAuthorized(WALLET_5, false, DEPLOYER);
+    
+    const { result } = recordMatch(WALLET_1, WALLET_2, WALLET_5);
+    expect(result).toBeErr(Cl.uint(ERR_NOT_AUTHORIZED));
+  });
+  
