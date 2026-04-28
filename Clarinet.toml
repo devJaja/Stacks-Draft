@@ -23,3 +23,4 @@ callee_filter = false
 [contracts.checkers-leaderboard]
 path = 'contracts/checkers-leaderboard.clar'
 clarity_version = 2
+epoch = 2.4
