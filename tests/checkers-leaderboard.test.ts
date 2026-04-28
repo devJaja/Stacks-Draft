@@ -275,3 +275,7 @@ describe('Stacks Checkers Leaderboard: Integration Scenarios', () => {
     expect(rating).toStrictEqual(Cl.uint(INITIAL_RATING + (2 * RATING_CHANGE)));
   });
   
+  /**
+   * Future Enhancement: Test owner transfer logic
+   * Currently not implemented in contract, but suite is ready.
+   */
