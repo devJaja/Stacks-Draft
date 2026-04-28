@@ -65,3 +65,4 @@
     })
     (map-set player-stats loser {
       games-played: (+ (get games-played loser-stats) u1),
+      wins: (get wins loser-stats),
