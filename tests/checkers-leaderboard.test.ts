@@ -171,3 +171,15 @@ describe('Stacks Checkers Leaderboard: Match Result Tests', () => {
     expect(stats.value.data['rating']).toStrictEqual(Cl.uint(INITIAL_RATING - RATING_CHANGE));
   });
   
+  it('should increment games-played for both participants', () => {
+    setAuthorized(WALLET_5, true, DEPLOYER);
+    registerPlayer(WALLET_1);
+    registerPlayer(WALLET_2);
+    recordMatch(WALLET_1, WALLET_2, WALLET_5);
+    
+    const s1: any = getPlayerStats(WALLET_1).result;
+    const s2: any = getPlayerStats(WALLET_2).result;
+    expect(s1.value.data['games-played']).toStrictEqual(Cl.uint(1));
+    expect(s2.value.data['games-played']).toStrictEqual(Cl.uint(1));
+  });
+  
