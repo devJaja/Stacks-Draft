@@ -6,6 +6,10 @@ telemetry_enabled = false
 
 [contracts.checkers]
 path = "contracts/checkers.clar"
+depends_on = ["checkers-leaderboard"]
+
+[contracts.checkers-leaderboard]
+path = "contracts/checkers-leaderboard.clar"
 
 [repl.analysis]
 passes = ["check_checker"]
@@ -15,3 +19,5 @@ strict = false
 trusted_sender = false
 trusted_caller = false
 callee_filter = false
+
+[contracts.checkers-leaderboard]
