@@ -124,3 +124,8 @@ describe('Stacks Checkers Leaderboard: Registration Tests', () => {
     expect(result).toBeNone();
   });
   
+  it('should return 0 rating for an unregistered player via getter', () => {
+    const { result } = getRating(WALLET_4);
+    expect(result).toStrictEqual(Cl.uint(0));
+  });
+  
