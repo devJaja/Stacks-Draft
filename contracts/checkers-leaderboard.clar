@@ -34,3 +34,4 @@
 (define-public (set-authorized-caller (caller principal) (authorized bool))
   (begin
     (asserts! (is-owner) err-not-authorized)
+    (ok (map-set authorized-callers caller authorized))
