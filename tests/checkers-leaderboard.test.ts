@@ -189,3 +189,11 @@ describe('Stacks Checkers Leaderboard: Match Result Tests', () => {
     registerPlayer(WALLET_2);
     
     // Manually force many losses to test floor logic
+    for (let i = 0; i < 50; i++) {
+      recordMatch(WALLET_1, WALLET_2, WALLET_5);
+    }
+    
+    const rating = getRating(WALLET_2).result;
+    expect(rating).toStrictEqual(Cl.uint(0));
+  });
+  
