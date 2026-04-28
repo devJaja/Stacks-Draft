@@ -27,3 +27,6 @@
 
 ;; Private functions
 (define-private (is-owner)
+  (is-eq tx-sender (var-get contract-owner))
+)
+
