@@ -7,3 +7,4 @@
 (define-constant err-not-registered (err u102))
 
 ;; Data Maps
+(define-map player-stats
