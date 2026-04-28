@@ -62,3 +62,4 @@
       wins: (+ (get wins winner-stats) u1),
       losses: (get losses winner-stats),
       rating: (+ (get rating winner-stats) u25)
+    })
