@@ -71,3 +71,15 @@ function getPlayerStats(player: string) {
   );
 }
 
+/**
+ * Helper to fetch just the rating from stacks contract
+ */
+function getRating(player: string) {
+  return simnet.callReadOnlyFn(
+    'checkers-leaderboard',
+    'get-rating',
+    [Cl.principal(player)],
+    DEPLOYER
+  );
+}
+
