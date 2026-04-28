@@ -67,3 +67,4 @@
       games-played: (+ (get games-played loser-stats) u1),
       wins: (get wins loser-stats),
       losses: (+ (get losses loser-stats) u1),
+      rating: (if (> (get rating loser-stats) u25) (- (get rating loser-stats) u25) u0)
