@@ -45,3 +45,4 @@
       games-played: u0,
       wins: u0,
       losses: u0,
+      rating: u1200
