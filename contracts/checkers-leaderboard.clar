@@ -78,3 +78,4 @@
   (map-get? player-stats player)
 )
 
+(define-read-only (get-rating (player principal))
