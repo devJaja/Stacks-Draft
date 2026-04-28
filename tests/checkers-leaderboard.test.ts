@@ -298,3 +298,7 @@ describe('Stacks Checkers Leaderboard: Integration Scenarios', () => {
     expect(rating).toStrictEqual(Cl.uint(INITIAL_RATING + RATING_CHANGE));
   });
   
+  /**
+   * Finalizing the test suite for the Stacks Checkers Leaderboard.
+   * All primary logic paths (auth, reg, record, rating) covered.
+   */
