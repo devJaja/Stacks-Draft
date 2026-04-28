@@ -235,3 +235,13 @@ describe('Stacks Checkers Leaderboard: Integration Scenarios', () => {
     expect(rating).toStrictEqual(Cl.uint(INITIAL_RATING + RATING_CHANGE));
   });
   
+  it('should track cumulative wins correctly', () => {
+    setAuthorized(WALLET_5, true, DEPLOYER);
+    recordMatch(WALLET_1, WALLET_2, WALLET_5);
+    recordMatch(WALLET_1, WALLET_3, WALLET_5);
+    recordMatch(WALLET_1, WALLET_4, WALLET_5);
+    
+    const stats: any = getPlayerStats(WALLET_1).result;
+    expect(stats.value.data['wins']).toStrictEqual(Cl.uint(3));
+  });
+  
