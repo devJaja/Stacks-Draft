@@ -35,3 +35,6 @@
   (begin
     (asserts! (is-owner) err-not-authorized)
     (ok (map-set authorized-callers caller authorized))
+  )
+)
+
