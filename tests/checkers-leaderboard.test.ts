@@ -302,3 +302,6 @@ describe('Stacks Checkers Leaderboard: Integration Scenarios', () => {
    * Finalizing the test suite for the Stacks Checkers Leaderboard.
    * All primary logic paths (auth, reg, record, rating) covered.
    */
+});
+
+// End of Stacks Checkers Leaderboard Test Suite
