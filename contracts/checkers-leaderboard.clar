@@ -11,3 +11,4 @@
   principal
   {
     games-played: uint,
+    wins: uint,
