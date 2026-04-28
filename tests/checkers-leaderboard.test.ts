@@ -47,3 +47,15 @@ function setAuthorized(caller: string, authorized: boolean, sender: string) {
   );
 }
 
+/**
+ * Helper to record a match result on stacks
+ */
+function recordMatch(winner: string, loser: string, sender: string) {
+  return simnet.callPublicFn(
+    'checkers-leaderboard',
+    'record-match',
+    [Cl.principal(winner), Cl.principal(loser)],
+    sender
+  );
+}
+
