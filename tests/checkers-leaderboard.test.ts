@@ -105,3 +105,11 @@ describe('Stacks Checkers Leaderboard: Authorization Tests', () => {
 
 describe('Stacks Checkers Leaderboard: Registration Tests', () => {
   
+  it('should allow a new player to register on stacks', () => {
+    const { result } = registerPlayer(WALLET_1);
+    expect(result).toBeOk(Cl.bool(true));
+    
+    const stats: any = getPlayerStats(WALLET_1).result;
+    expect(stats.value.data['rating']).toStrictEqual(Cl.uint(INITIAL_RATING));
+  });
+  
