@@ -133,3 +133,10 @@ describe('Stacks Checkers Leaderboard: Registration Tests', () => {
 
 describe('Stacks Checkers Leaderboard: Match Result Tests', () => {
   
+  it('should prevent unauthorized callers from recording matches', () => {
+    registerPlayer(WALLET_1);
+    registerPlayer(WALLET_2);
+    const { result } = recordMatch(WALLET_1, WALLET_2, WALLET_3);
+    expect(result).toBeErr(Cl.uint(ERR_NOT_AUTHORIZED));
+  });
+  
