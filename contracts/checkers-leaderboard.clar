@@ -54,3 +54,4 @@
   (let (
     (caller-authorized (default-to false (map-get? authorized-callers contract-caller)))
     (winner-stats (default-to { games-played: u0, wins: u0, losses: u0, rating: u1200 } (map-get? player-stats winner)))
+    (loser-stats (default-to { games-played: u0, wins: u0, losses: u0, rating: u1200 } (map-get? player-stats loser)))
