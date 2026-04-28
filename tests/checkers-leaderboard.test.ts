@@ -35,3 +35,15 @@ function registerPlayer(sender: string) {
   );
 }
 
+/**
+ * Helper to set authorized callers for the stacks contract
+ */
+function setAuthorized(caller: string, authorized: boolean, sender: string) {
+  return simnet.callPublicFn(
+    'checkers-leaderboard',
+    'set-authorized-caller',
+    [Cl.principal(caller), Cl.bool(authorized)],
+    sender
+  );
+}
+
