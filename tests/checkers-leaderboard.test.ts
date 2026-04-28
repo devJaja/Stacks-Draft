@@ -221,3 +221,7 @@ describe('Stacks Checkers Leaderboard: Match Result Tests', () => {
     expect(rating).toStrictEqual(Cl.uint(INITIAL_RATING - RATING_CHANGE));
   });
   
+});
+
+describe('Stacks Checkers Leaderboard: Integration Scenarios', () => {
+  
