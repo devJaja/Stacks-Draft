@@ -1,0 +1,1 @@
+;; checkers-leaderboard.clar
