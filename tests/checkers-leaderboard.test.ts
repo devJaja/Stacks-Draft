@@ -119,3 +119,8 @@ describe('Stacks Checkers Leaderboard: Registration Tests', () => {
     expect(result).toBeErr(Cl.uint(ERR_ALREADY_REGISTERED));
   });
   
+  it('should return none for an unregistered player stats', () => {
+    const { result } = getPlayerStats(WALLET_3);
+    expect(result).toBeNone();
+  });
+  
