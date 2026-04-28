@@ -10,3 +10,4 @@
 (define-map player-stats
   principal
   {
+    games-played: uint,
