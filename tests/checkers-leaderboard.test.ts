@@ -95,3 +95,9 @@ describe('Stacks Checkers Leaderboard: Authorization Tests', () => {
     expect(result).toBeErr(Cl.uint(ERR_NOT_AUTHORIZED));
   });
   
+  it('should allow owner to toggle authorization off', () => {
+    setAuthorized(WALLET_1, true, DEPLOYER);
+    const { result } = setAuthorized(WALLET_1, false, DEPLOYER);
+    expect(result).toBeOk(Cl.bool(true));
+  });
+  
