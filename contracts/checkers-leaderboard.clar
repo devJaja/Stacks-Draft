@@ -22,3 +22,6 @@
   bool
 )
 
+;; Variables
+(define-data-var contract-owner principal tx-sender)
+
