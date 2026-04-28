@@ -90,3 +90,8 @@ describe('Stacks Checkers Leaderboard: Authorization Tests', () => {
     expect(result).toBeOk(Cl.bool(true));
   });
   
+  it('should verify that unauthorized users cannot set callers', () => {
+    const { result } = setAuthorized(WALLET_2, true, WALLET_1);
+    expect(result).toBeErr(Cl.uint(ERR_NOT_AUTHORIZED));
+  });
+  
