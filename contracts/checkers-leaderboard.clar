@@ -26,3 +26,4 @@
 (define-data-var contract-owner principal tx-sender)
 
 ;; Private functions
+(define-private (is-owner)
