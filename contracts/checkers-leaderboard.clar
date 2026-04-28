@@ -42,3 +42,4 @@
   (let ((stats (map-get? player-stats tx-sender)))
     (asserts! (is-none stats) err-already-registered)
     (ok (map-set player-stats tx-sender {
+      games-played: u0,
