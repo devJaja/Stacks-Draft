@@ -101,3 +101,7 @@ describe('Stacks Checkers Leaderboard: Authorization Tests', () => {
     expect(result).toBeOk(Cl.bool(true));
   });
   
+});
+
+describe('Stacks Checkers Leaderboard: Registration Tests', () => {
+  
