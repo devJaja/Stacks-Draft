@@ -279,3 +279,8 @@ describe('Stacks Checkers Leaderboard: Integration Scenarios', () => {
    * Future Enhancement: Test owner transfer logic
    * Currently not implemented in contract, but suite is ready.
    */
+  it('should handle large amounts of rating growth', () => {
+    setAuthorized(WALLET_5, true, DEPLOYER);
+    for (let i = 0; i < 100; i++) {
+      recordMatch(WALLET_1, WALLET_2, WALLET_5);
+    }
