@@ -8,3 +8,4 @@
 
 ;; Data Maps
 (define-map player-stats
+  principal
