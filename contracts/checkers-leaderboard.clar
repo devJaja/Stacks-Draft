@@ -31,3 +31,4 @@
 )
 
 ;; Public functions
+(define-public (set-authorized-caller (caller principal) (authorized bool))
