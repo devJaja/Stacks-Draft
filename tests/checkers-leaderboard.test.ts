@@ -22,3 +22,16 @@ const ERR_NOT_REGISTERED = 102;
 const INITIAL_RATING = 1200;
 const RATING_CHANGE = 25;
 
+/**
+ * Helper to register a player on the stacks leaderboard
+ * @param sender - The principal registering
+ */
+function registerPlayer(sender: string) {
+  return simnet.callPublicFn(
+    'checkers-leaderboard',
+    'register-player',
+    [],
+    sender
+  );
+}
+
