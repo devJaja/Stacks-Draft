@@ -225,3 +225,13 @@ describe('Stacks Checkers Leaderboard: Match Result Tests', () => {
 
 describe('Stacks Checkers Leaderboard: Integration Scenarios', () => {
   
+  it('should handle a sequence of wins and losses for a single player', () => {
+    setAuthorized(WALLET_5, true, DEPLOYER);
+    recordMatch(WALLET_1, WALLET_2, WALLET_5); // W1 wins (+25)
+    recordMatch(WALLET_2, WALLET_1, WALLET_5); // W1 loses (-25)
+    recordMatch(WALLET_1, WALLET_3, WALLET_5); // W1 wins (+25)
+    
+    const rating = getRating(WALLET_1).result;
+    expect(rating).toStrictEqual(Cl.uint(INITIAL_RATING + RATING_CHANGE));
+  });
+  
