@@ -284,3 +284,8 @@ describe('Stacks Checkers Leaderboard: Integration Scenarios', () => {
     for (let i = 0; i < 100; i++) {
       recordMatch(WALLET_1, WALLET_2, WALLET_5);
     }
+    const rating = getRating(WALLET_1).result;
+    const expected = INITIAL_RATING + (100 * RATING_CHANGE);
+    expect(rating).toStrictEqual(Cl.uint(expected));
+  });
+  
