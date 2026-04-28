@@ -15,3 +15,10 @@ const WALLET_3 = accounts.get('wallet_3')!;
 const WALLET_4 = accounts.get('wallet_4')!;
 const WALLET_5 = accounts.get('wallet_5')!;
 
+const ERR_NOT_AUTHORIZED = 100;
+const ERR_ALREADY_REGISTERED = 101;
+const ERR_NOT_REGISTERED = 102;
+
+const INITIAL_RATING = 1200;
+const RATING_CHANGE = 25;
+
