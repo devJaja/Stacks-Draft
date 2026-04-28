@@ -264,3 +264,14 @@ describe('Stacks Checkers Leaderboard: Integration Scenarios', () => {
     expect(stats.value.data['games-played']).toStrictEqual(Cl.uint(3));
   });
   
+  it('should allow multiple authorized contracts to update stats', () => {
+    setAuthorized(WALLET_3, true, DEPLOYER);
+    setAuthorized(WALLET_4, true, DEPLOYER);
+    
+    recordMatch(WALLET_1, WALLET_2, WALLET_3);
+    recordMatch(WALLET_1, WALLET_2, WALLET_4);
+    
+    const rating = getRating(WALLET_1).result;
+    expect(rating).toStrictEqual(Cl.uint(INITIAL_RATING + (2 * RATING_CHANGE)));
+  });
+  
