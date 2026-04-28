@@ -59,3 +59,15 @@ function recordMatch(winner: string, loser: string, sender: string) {
   );
 }
 
+/**
+ * Helper to fetch player stats from stacks maps
+ */
+function getPlayerStats(player: string) {
+  return simnet.callReadOnlyFn(
+    'checkers-leaderboard',
+    'get-player-stats',
+    [Cl.principal(player)],
+    DEPLOYER
+  );
+}
+
