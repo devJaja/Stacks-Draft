@@ -140,3 +140,12 @@ describe('Stacks Checkers Leaderboard: Match Result Tests', () => {
     expect(result).toBeErr(Cl.uint(ERR_NOT_AUTHORIZED));
   });
   
+  it('should allow authorized callers to record match results', () => {
+    setAuthorized(WALLET_5, true, DEPLOYER);
+    registerPlayer(WALLET_1);
+    registerPlayer(WALLET_2);
+    
+    const { result } = recordMatch(WALLET_1, WALLET_2, WALLET_5);
+    expect(result).toBeOk(Cl.bool(true));
+  });
+  
