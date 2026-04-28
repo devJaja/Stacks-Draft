@@ -83,3 +83,10 @@ function getRating(player: string) {
   );
 }
 
+describe('Stacks Checkers Leaderboard: Authorization Tests', () => {
+  
+  it('should allow the owner to authorize a new game contract', () => {
+    const { result } = setAuthorized(WALLET_1, true, DEPLOYER);
+    expect(result).toBeOk(Cl.bool(true));
+  });
+  
