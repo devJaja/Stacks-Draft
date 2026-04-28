@@ -59,3 +59,4 @@
     (asserts! caller-authorized err-not-authorized)
     (map-set player-stats winner {
       games-played: (+ (get games-played winner-stats) u1),
+      wins: (+ (get wins winner-stats) u1),
