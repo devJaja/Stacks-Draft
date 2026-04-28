@@ -25,3 +25,4 @@
 ;; Variables
 (define-data-var contract-owner principal tx-sender)
 
+;; Private functions
