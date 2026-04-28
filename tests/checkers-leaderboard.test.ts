@@ -113,3 +113,9 @@ describe('Stacks Checkers Leaderboard: Registration Tests', () => {
     expect(stats.value.data['rating']).toStrictEqual(Cl.uint(INITIAL_RATING));
   });
   
+  it('should prevent a player from registering twice on stacks', () => {
+    registerPlayer(WALLET_2);
+    const { result } = registerPlayer(WALLET_2);
+    expect(result).toBeErr(Cl.uint(ERR_ALREADY_REGISTERED));
+  });
+  
