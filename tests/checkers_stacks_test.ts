@@ -400,3 +400,16 @@ Clarinet.test({
       .result.expectUint(4);
   },
 });
+
+// ─────────────────────────────────────────────────────────────
+// get-game
+// ─────────────────────────────────────────────────────────────
+
+Clarinet.test({
+  name: "[stacks] get-game: returns none for nonexistent Stacks game id",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectNone();
+  },
+});
