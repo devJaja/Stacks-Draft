@@ -510,3 +510,15 @@ Clarinet.test({
       .result.expectUint(3);
   },
 });
+
+Clarinet.test({
+  name: "[stacks] get-piece: Stacks board reflects piece at destination after move",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(24)], p1.address)
+      .result.expectUint(1);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(17)], p1.address)
+      .result.expectUint(0);
+  },
+});
