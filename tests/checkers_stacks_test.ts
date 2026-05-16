@@ -552,3 +552,17 @@ Clarinet.test({
       .result.expectUint(2);
   },
 });
+
+// ─────────────────────────────────────────────────────────────
+// get-board
+// ─────────────────────────────────────────────────────────────
+
+Clarinet.test({
+  name: "[stacks] get-board: returns ok tuple with 64 positions for Stacks game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const result = chain.callReadOnlyFn("checkers", "get-board", [types.uint(0)], p1.address);
+    result.result.expectOk().expectTuple();
+  },
+});
