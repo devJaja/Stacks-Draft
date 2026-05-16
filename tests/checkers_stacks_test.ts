@@ -566,3 +566,14 @@ Clarinet.test({
     result.result.expectOk().expectTuple();
   },
 });
+
+Clarinet.test({
+  name: "[stacks] get-board: Stacks board snapshot shows p1 piece at pos 1 after init",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const board = chain.callReadOnlyFn("checkers", "get-board", [types.uint(0)], p1.address)
+      .result.expectOk().expectTuple();
+    assertEquals(board["p1"], types.uint(1));
+  },
+});
