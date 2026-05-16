@@ -69,3 +69,14 @@ Clarinet.test({
     data["winner"].expectNone();
   },
 });
+
+Clarinet.test({
+  name: "[stacks] create-game: Stacks game is inactive before second player joins",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["is-active"], types.bool(false));
+  },
+});
