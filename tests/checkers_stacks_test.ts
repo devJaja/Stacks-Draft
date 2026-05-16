@@ -13,3 +13,18 @@ function activeGame(chain: Chain, accounts: Map<string, Account>) {
   ]);
   return { p1, p2 };
 }
+
+// ─────────────────────────────────────────────────────────────
+// create-game
+// ─────────────────────────────────────────────────────────────
+
+Clarinet.test({
+  name: "[stacks] create-game: deploying first game on Stacks returns game-id 0",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], p1.address),
+    ]);
+    block.receipts[0].result.expectOk().expectUint(0);
+  },
+});
