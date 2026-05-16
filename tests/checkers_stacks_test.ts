@@ -157,3 +157,13 @@ Clarinet.test({
     block.receipts[0].result.expectOk().expectBool(true);
   },
 });
+
+Clarinet.test({
+  name: "[stacks] join-game: Stacks game becomes active after player2 joins",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = activeGame(chain, accounts);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["is-active"], types.bool(true));
+  },
+});
