@@ -212,3 +212,18 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(101);
   },
 });
+
+// ─────────────────────────────────────────────────────────────
+// move
+// ─────────────────────────────────────────────────────────────
+
+Clarinet.test({
+  name: "[stacks] move: Stacks player1 makes a valid diagonal move and gets ok true",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = activeGame(chain, accounts);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+  },
+});
