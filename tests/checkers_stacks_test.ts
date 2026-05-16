@@ -645,3 +645,14 @@ Clarinet.test({
     assertEquals(board["p5"], types.uint(4));
   },
 });
+
+Clarinet.test({
+  name: "[stacks] get-board: Stacks board returns ok for nonexistent game with all zeros",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const board = chain.callReadOnlyFn("checkers", "get-board", [types.uint(0)], p1.address)
+      .result.expectOk().expectTuple();
+    assertEquals(board["p1"], types.uint(0));
+    assertEquals(board["p40"], types.uint(0));
+  },
+});
