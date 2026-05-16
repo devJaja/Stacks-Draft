@@ -200,3 +200,15 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(101);
   },
 });
+
+Clarinet.test({
+  name: "[stacks] join-game: third Stacks principal cannot join a full game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = activeGame(chain, accounts);
+    const p3 = accounts.get("wallet_3")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], p3.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(101);
+  },
+});
