@@ -258,3 +258,15 @@ Clarinet.test({
     assertEquals(data["current-turn"], p2.address);
   },
 });
+
+Clarinet.test({
+  name: "[stacks] move: Stacks current-turn returns to player1 after player2 moves",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["current-turn"], p1.address);
+  },
+});
