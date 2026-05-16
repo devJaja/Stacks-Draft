@@ -293,3 +293,14 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(104);
   },
 });
+
+Clarinet.test({
+  name: "[stacks] move: Stacks contract rejects move when it is not player's turn",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p2 } = activeGame(chain, accounts);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(102);
+  },
+});
