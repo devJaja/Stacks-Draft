@@ -744,3 +744,22 @@ Clarinet.test({
     assertEquals(data["is-active"], types.bool(true));
   },
 });
+
+Clarinet.test({
+  name: "[stacks] get-board: Stacks board snapshot shows p1 king (u2) at pos 58 after promotion",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(23), types.uint(30)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(30), types.uint(37)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(33), types.uint(26)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(37), types.uint(44)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(19)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(44), types.uint(51)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(19), types.uint(12)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(51), types.uint(58)], p1.address)]);
+    const board = chain.callReadOnlyFn("checkers", "get-board", [types.uint(0)], p1.address)
+      .result.expectOk().expectTuple();
+    assertEquals(board["p58"], types.uint(2));
+  },
+});
