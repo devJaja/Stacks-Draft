@@ -116,3 +116,15 @@ Clarinet.test({
     }
   },
 });
+
+Clarinet.test({
+  name: "[stacks] create-game: Stacks board initializes p2 pieces at positions 56,58,60,62",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    for (const pos of [56, 58, 60, 62]) {
+      chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(pos)], p1.address)
+        .result.expectUint(3);
+    }
+  },
+});
