@@ -599,3 +599,15 @@ Clarinet.test({
     assertEquals(board["p0"], types.uint(0));
   },
 });
+
+Clarinet.test({
+  name: "[stacks] get-board: Stacks board snapshot reflects move — pos 17 empty, pos 24 filled",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    const board = chain.callReadOnlyFn("checkers", "get-board", [types.uint(0)], p1.address)
+      .result.expectOk().expectTuple();
+    assertEquals(board["p17"], types.uint(0));
+    assertEquals(board["p24"], types.uint(1));
+  },
+});
