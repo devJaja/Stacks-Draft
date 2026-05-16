@@ -730,3 +730,17 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(102);
   },
 });
+
+Clarinet.test({
+  name: "[stacks] get-game: Stacks game player1 field unchanged after multiple moves",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(24), types.uint(31)], p1.address)]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["player1"], p1.address);
+    assertEquals(data["is-active"], types.bool(true));
+  },
+});
