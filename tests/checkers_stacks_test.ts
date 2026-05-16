@@ -327,3 +327,14 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(103);
   },
 });
+
+Clarinet.test({
+  name: "[stacks] move: Stacks contract rejects player1 moving opponent piece",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = activeGame(chain, accounts);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(102);
+  },
+});
