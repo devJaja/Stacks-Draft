@@ -656,3 +656,23 @@ Clarinet.test({
     assertEquals(board["p40"], types.uint(0));
   },
 });
+
+Clarinet.test({
+  name: "[stacks] create-game: two Stacks principals can each create independent games",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const p2 = accounts.get("wallet_2")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], p1.address),
+      Tx.contractCall("checkers", "create-game", [], p2.address),
+    ]);
+    block.receipts[0].result.expectOk().expectUint(0);
+    block.receipts[1].result.expectOk().expectUint(1);
+    const d0 = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    const d1 = chain.callReadOnlyFn("checkers", "get-game", [types.uint(1)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(d0["player1"], p1.address);
+    assertEquals(d1["player1"], p2.address);
+  },
+});
