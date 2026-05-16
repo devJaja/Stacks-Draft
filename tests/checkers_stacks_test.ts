@@ -80,3 +80,15 @@ Clarinet.test({
     assertEquals(data["is-active"], types.bool(false));
   },
 });
+
+Clarinet.test({
+  name: "[stacks] create-game: Stacks board initializes p1 pieces at positions 1,3,5,7",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    for (const pos of [1, 3, 5, 7]) {
+      chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(pos)], p1.address)
+        .result.expectUint(1);
+    }
+  },
+});
