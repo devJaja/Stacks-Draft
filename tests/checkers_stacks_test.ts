@@ -481,3 +481,12 @@ Clarinet.test({
       .result.expectUint(0);
   },
 });
+
+Clarinet.test({
+  name: "[stacks] get-piece: returns u0 for any square on nonexistent Stacks game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(99), types.uint(1)], p1.address)
+      .result.expectUint(0);
+  },
+});
