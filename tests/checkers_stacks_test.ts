@@ -140,3 +140,20 @@ Clarinet.test({
     }
   },
 });
+
+// ─────────────────────────────────────────────────────────────
+// join-game
+// ─────────────────────────────────────────────────────────────
+
+Clarinet.test({
+  name: "[stacks] join-game: second Stacks principal joins and receives ok true",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const p2 = accounts.get("wallet_2")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], p2.address),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+  },
+});
