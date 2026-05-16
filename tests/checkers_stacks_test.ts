@@ -177,3 +177,14 @@ Clarinet.test({
     assertEquals(data["player2"].expectSome(), p2.address);
   },
 });
+
+Clarinet.test({
+  name: "[stacks] join-game: returns err-game-not-found for missing Stacks game id",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p2 = accounts.get("wallet_2")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "join-game", [types.uint(77)], p2.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(100);
+  },
+});
