@@ -167,3 +167,13 @@ Clarinet.test({
     assertEquals(data["is-active"], types.bool(true));
   },
 });
+
+Clarinet.test({
+  name: "[stacks] join-game: player2 Stacks principal stored correctly in game map",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["player2"].expectSome(), p2.address);
+  },
+});
