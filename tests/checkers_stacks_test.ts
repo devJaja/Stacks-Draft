@@ -270,3 +270,14 @@ Clarinet.test({
     assertEquals(data["current-turn"], p1.address);
   },
 });
+
+Clarinet.test({
+  name: "[stacks] move: Stacks contract rejects move on nonexistent game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(99), types.uint(17), types.uint(24)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(100);
+  },
+});
