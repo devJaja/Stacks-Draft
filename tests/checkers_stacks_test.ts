@@ -611,3 +611,17 @@ Clarinet.test({
     assertEquals(board["p24"], types.uint(1));
   },
 });
+
+Clarinet.test({
+  name: "[stacks] get-board: Stacks board snapshot shows empty at captured square after jump",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(26)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(40)], p1.address)]);
+    const board = chain.callReadOnlyFn("checkers", "get-board", [types.uint(0)], p1.address)
+      .result.expectOk().expectTuple();
+    assertEquals(board["p33"], types.uint(0));
+    assertEquals(board["p40"], types.uint(1));
+  },
+});
