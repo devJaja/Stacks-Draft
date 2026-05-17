@@ -1,0 +1,765 @@
+import { Clarinet, Tx, Chain, Account, types } from "https://deno.land/x/clarinet@v1.7.1/index.ts";
+import { assertEquals } from "https://deno.land/std@0.170.0/testing/asserts.ts";
+
+// ─────────────────────────────────────────────────────────────
+// Shared helper — spins up an active game on the Stacks chain
+// ─────────────────────────────────────────────────────────────
+function activeGame(chain: Chain, accounts: Map<string, Account>) {
+  const p1 = accounts.get("wallet_1")!;
+  const p2 = accounts.get("wallet_2")!;
+  chain.mineBlock([
+    Tx.contractCall("checkers", "create-game", [], p1.address),
+    Tx.contractCall("checkers", "join-game", [types.uint(0)], p2.address),
+  ]);
+  return { p1, p2 };
+}
+
+// ─────────────────────────────────────────────────────────────
+// create-game
+// ─────────────────────────────────────────────────────────────
+
+Clarinet.test({
+  name: "[stacks] create-game: deploying first game on Stacks returns game-id 0",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], p1.address),
+    ]);
+    block.receipts[0].result.expectOk().expectUint(0);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] create-game: Stacks game-nonce increments with each new game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const p2 = accounts.get("wallet_2")!;
+    const p3 = accounts.get("wallet_3")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], p1.address),
+      Tx.contractCall("checkers", "create-game", [], p2.address),
+      Tx.contractCall("checkers", "create-game", [], p3.address),
+    ]);
+    block.receipts[0].result.expectOk().expectUint(0);
+    block.receipts[1].result.expectOk().expectUint(1);
+    block.receipts[2].result.expectOk().expectUint(2);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] create-game: Stacks principal stored as player1 and current-turn",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["player1"], p1.address);
+    assertEquals(data["current-turn"], p1.address);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] create-game: new Stacks game has no player2 and no winner",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    data["player2"].expectNone();
+    data["winner"].expectNone();
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] create-game: Stacks game is inactive before second player joins",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["is-active"], types.bool(false));
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] create-game: Stacks board initializes p1 pieces at positions 1,3,5,7",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    for (const pos of [1, 3, 5, 7]) {
+      chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(pos)], p1.address)
+        .result.expectUint(1);
+    }
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] create-game: Stacks board initializes p1 pieces at positions 8,10,12,14",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    for (const pos of [8, 10, 12, 14]) {
+      chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(pos)], p1.address)
+        .result.expectUint(1);
+    }
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] create-game: Stacks board initializes p2 pieces at positions 40,42,44,46",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    for (const pos of [40, 42, 44, 46]) {
+      chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(pos)], p1.address)
+        .result.expectUint(3);
+    }
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] create-game: Stacks board initializes p2 pieces at positions 56,58,60,62",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    for (const pos of [56, 58, 60, 62]) {
+      chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(pos)], p1.address)
+        .result.expectUint(3);
+    }
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] create-game: Stacks board middle squares are empty after init",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    for (const pos of [24, 25, 30, 31, 32, 33]) {
+      chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(pos)], p1.address)
+        .result.expectUint(0);
+    }
+  },
+});
+
+// ─────────────────────────────────────────────────────────────
+// join-game
+// ─────────────────────────────────────────────────────────────
+
+Clarinet.test({
+  name: "[stacks] join-game: second Stacks principal joins and receives ok true",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const p2 = accounts.get("wallet_2")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], p2.address),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] join-game: Stacks game becomes active after player2 joins",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = activeGame(chain, accounts);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["is-active"], types.bool(true));
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] join-game: player2 Stacks principal stored correctly in game map",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["player2"].expectSome(), p2.address);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] join-game: returns err-game-not-found for missing Stacks game id",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p2 = accounts.get("wallet_2")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "join-game", [types.uint(77)], p2.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(100);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] join-game: Stacks player1 cannot join their own game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(101);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] join-game: third Stacks principal cannot join a full game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = activeGame(chain, accounts);
+    const p3 = accounts.get("wallet_3")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], p3.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(101);
+  },
+});
+
+// ─────────────────────────────────────────────────────────────
+// move
+// ─────────────────────────────────────────────────────────────
+
+Clarinet.test({
+  name: "[stacks] move: Stacks player1 makes a valid diagonal move and gets ok true",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = activeGame(chain, accounts);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] move: Stacks board clears source square after move",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(17)], p1.address)
+      .result.expectUint(0);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] move: Stacks board places piece at destination after move",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(24)], p1.address)
+      .result.expectUint(1);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] move: Stacks current-turn switches to player2 after player1 moves",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["current-turn"], p2.address);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] move: Stacks current-turn returns to player1 after player2 moves",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["current-turn"], p1.address);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] move: Stacks contract rejects move on nonexistent game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(99), types.uint(17), types.uint(24)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(100);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] move: Stacks contract rejects move when game is not yet active",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(104);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] move: Stacks contract rejects move when it is not player's turn",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p2 } = activeGame(chain, accounts);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(102);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] move: Stacks contract rejects move from an empty square",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = activeGame(chain, accounts);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(30), types.uint(37)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(103);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] move: Stacks contract rejects move to an occupied square",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = activeGame(chain, accounts);
+    // pos 1 and pos 8 both have p1 pieces at start
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(1), types.uint(8)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(103);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] move: Stacks contract rejects player1 moving opponent piece",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = activeGame(chain, accounts);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p1.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(102);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] move: Stacks capture jump removes opponent piece from board",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    // p1: 17->26, p2: 40->33, p1 captures: 26->40 (mid=33)
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(26)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(40)], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(33)], p1.address)
+      .result.expectUint(0);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] move: Stacks capture attacker lands on correct destination square",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(26)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(40)], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(40)], p1.address)
+      .result.expectUint(1);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] move: Stacks p1 piece promotes to king (u2) on reaching row 8",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(23), types.uint(30)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(30), types.uint(37)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(33), types.uint(26)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(37), types.uint(44)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(19)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(44), types.uint(51)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(19), types.uint(12)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(51), types.uint(58)], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(58)], p1.address)
+      .result.expectUint(2);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] move: Stacks p2 piece promotes to king (u4) on reaching row 1",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(24), types.uint(31)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(33), types.uint(26)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(31), types.uint(38)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(19)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(38), types.uint(45)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(19), types.uint(12)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(45), types.uint(52)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(12), types.uint(5)], p2.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(5)], p2.address)
+      .result.expectUint(4);
+  },
+});
+
+// ─────────────────────────────────────────────────────────────
+// get-game
+// ─────────────────────────────────────────────────────────────
+
+Clarinet.test({
+  name: "[stacks] get-game: returns none for nonexistent Stacks game id",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectNone();
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-game: returns some tuple for a created Stacks game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-game: Stacks game state reflects is-active and player2 after join",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["is-active"], types.bool(true));
+    assertEquals(data["player2"].expectSome(), p2.address);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-game: Stacks game state reflects updated current-turn after move",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["current-turn"], p2.address);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-game: multiple Stacks games stored independently by game-id",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const p2 = accounts.get("wallet_2")!;
+    const p3 = accounts.get("wallet_3")!;
+    chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], p1.address),
+      Tx.contractCall("checkers", "create-game", [], p3.address),
+      Tx.contractCall("checkers", "join-game", [types.uint(0)], p2.address),
+    ]);
+    const d0 = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    const d1 = chain.callReadOnlyFn("checkers", "get-game", [types.uint(1)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(d0["is-active"], types.bool(true));
+    assertEquals(d1["is-active"], types.bool(false));
+    assertEquals(d0["player1"], p1.address);
+    assertEquals(d1["player1"], p3.address);
+  },
+});
+
+// ─────────────────────────────────────────────────────────────
+// get-piece
+// ─────────────────────────────────────────────────────────────
+
+Clarinet.test({
+  name: "[stacks] get-piece: returns u0 for empty square on Stacks board",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(30)], p1.address)
+      .result.expectUint(0);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-piece: returns u0 for any square on nonexistent Stacks game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(99), types.uint(1)], p1.address)
+      .result.expectUint(0);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-piece: returns u1 for p1 piece at Stacks starting position",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(21)], p1.address)
+      .result.expectUint(1);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-piece: returns u3 for p2 piece at Stacks starting position",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(51)], p1.address)
+      .result.expectUint(3);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-piece: Stacks board reflects piece at destination after move",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(24)], p1.address)
+      .result.expectUint(1);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(17)], p1.address)
+      .result.expectUint(0);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-piece: Stacks board returns u0 at captured piece position",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(26)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(40)], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(33)], p1.address)
+      .result.expectUint(0);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-piece: Stacks board returns u2 for promoted p1 king piece",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(23), types.uint(30)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(30), types.uint(37)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(33), types.uint(26)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(37), types.uint(44)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(19)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(44), types.uint(51)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(19), types.uint(12)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(51), types.uint(58)], p1.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(58)], p1.address)
+      .result.expectUint(2);
+  },
+});
+
+// ─────────────────────────────────────────────────────────────
+// get-board
+// ─────────────────────────────────────────────────────────────
+
+Clarinet.test({
+  name: "[stacks] get-board: returns ok tuple with 64 positions for Stacks game",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const result = chain.callReadOnlyFn("checkers", "get-board", [types.uint(0)], p1.address);
+    result.result.expectOk().expectTuple();
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-board: Stacks board snapshot shows p1 piece at pos 1 after init",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const board = chain.callReadOnlyFn("checkers", "get-board", [types.uint(0)], p1.address)
+      .result.expectOk().expectTuple();
+    assertEquals(board["p1"], types.uint(1));
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-board: Stacks board snapshot shows p2 piece at pos 40 after init",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const board = chain.callReadOnlyFn("checkers", "get-board", [types.uint(0)], p1.address)
+      .result.expectOk().expectTuple();
+    assertEquals(board["p40"], types.uint(3));
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-board: Stacks board snapshot shows empty square at pos 0",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    chain.mineBlock([Tx.contractCall("checkers", "create-game", [], p1.address)]);
+    const board = chain.callReadOnlyFn("checkers", "get-board", [types.uint(0)], p1.address)
+      .result.expectOk().expectTuple();
+    assertEquals(board["p0"], types.uint(0));
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-board: Stacks board snapshot reflects move — pos 17 empty, pos 24 filled",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    const board = chain.callReadOnlyFn("checkers", "get-board", [types.uint(0)], p1.address)
+      .result.expectOk().expectTuple();
+    assertEquals(board["p17"], types.uint(0));
+    assertEquals(board["p24"], types.uint(1));
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-board: Stacks board snapshot shows empty at captured square after jump",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(26)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(40)], p1.address)]);
+    const board = chain.callReadOnlyFn("checkers", "get-board", [types.uint(0)], p1.address)
+      .result.expectOk().expectTuple();
+    assertEquals(board["p33"], types.uint(0));
+    assertEquals(board["p40"], types.uint(1));
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-board: Stacks board snapshot shows p2 king (u4) after promotion",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(24), types.uint(31)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(33), types.uint(26)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(31), types.uint(38)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(19)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(38), types.uint(45)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(19), types.uint(12)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(45), types.uint(52)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(12), types.uint(5)], p2.address)]);
+    const board = chain.callReadOnlyFn("checkers", "get-board", [types.uint(0)], p1.address)
+      .result.expectOk().expectTuple();
+    assertEquals(board["p5"], types.uint(4));
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-board: Stacks board returns ok for nonexistent game with all zeros",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const board = chain.callReadOnlyFn("checkers", "get-board", [types.uint(0)], p1.address)
+      .result.expectOk().expectTuple();
+    assertEquals(board["p1"], types.uint(0));
+    assertEquals(board["p40"], types.uint(0));
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] create-game: two Stacks principals can each create independent games",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const p1 = accounts.get("wallet_1")!;
+    const p2 = accounts.get("wallet_2")!;
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "create-game", [], p1.address),
+      Tx.contractCall("checkers", "create-game", [], p2.address),
+    ]);
+    block.receipts[0].result.expectOk().expectUint(0);
+    block.receipts[1].result.expectOk().expectUint(1);
+    const d0 = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    const d1 = chain.callReadOnlyFn("checkers", "get-game", [types.uint(1)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(d0["player1"], p1.address);
+    assertEquals(d1["player1"], p2.address);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] move: Stacks player2 makes valid diagonal move after player1",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] join-game: Stacks game winner remains none after player2 joins",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1 } = activeGame(chain, accounts);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    data["winner"].expectNone();
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-piece: Stacks board returns u4 for promoted p2 king piece",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(24), types.uint(31)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(33), types.uint(26)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(31), types.uint(38)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(19)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(38), types.uint(45)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(19), types.uint(12)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(45), types.uint(52)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(12), types.uint(5)], p2.address)]);
+    chain.callReadOnlyFn("checkers", "get-piece", [types.uint(0), types.uint(5)], p2.address)
+      .result.expectUint(4);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] move: Stacks contract rejects player2 moving opponent piece",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    // p2 tries to move a p1 piece at pos 23
+    const block = chain.mineBlock([
+      Tx.contractCall("checkers", "move", [types.uint(0), types.uint(23), types.uint(30)], p2.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(102);
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-game: Stacks game player1 field unchanged after multiple moves",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(17), types.uint(24)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(24), types.uint(31)], p1.address)]);
+    const data = chain.callReadOnlyFn("checkers", "get-game", [types.uint(0)], p1.address)
+      .result.expectSome().expectTuple();
+    assertEquals(data["player1"], p1.address);
+    assertEquals(data["is-active"], types.bool(true));
+  },
+});
+
+Clarinet.test({
+  name: "[stacks] get-board: Stacks board snapshot shows p1 king (u2) at pos 58 after promotion",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const { p1, p2 } = activeGame(chain, accounts);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(23), types.uint(30)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(40), types.uint(33)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(30), types.uint(37)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(33), types.uint(26)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(37), types.uint(44)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(26), types.uint(19)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(44), types.uint(51)], p1.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(19), types.uint(12)], p2.address)]);
+    chain.mineBlock([Tx.contractCall("checkers", "move", [types.uint(0), types.uint(51), types.uint(58)], p1.address)]);
+    const board = chain.callReadOnlyFn("checkers", "get-board", [types.uint(0)], p1.address)
+      .result.expectOk().expectTuple();
+    assertEquals(board["p58"], types.uint(2));
+  },
+});
