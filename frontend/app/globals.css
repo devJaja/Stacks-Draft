@@ -3,11 +3,29 @@
 @tailwind utilities;
 
 @layer base {
+  body {
+    @apply min-h-screen transition-colors duration-300;
+  }
+
+  .dark body,
   .dark {
     @apply bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white;
   }
-  
+
+  .light body,
   .light {
     @apply bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 text-gray-900;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-purple-500/50 rounded;
   }
 }
