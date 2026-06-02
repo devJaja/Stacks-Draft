@@ -13,9 +13,7 @@ export function useStacks() {
 
   useEffect(() => {
     if (userSession.isSignInPending()) {
-      userSession.handlePendingSignIn().then((data) => {
-        setUserData(data);
-      });
+      userSession.handlePendingSignIn().then(setUserData);
     } else if (userSession.isUserSignedIn()) {
       setUserData(userSession.loadUserData());
     }
@@ -23,14 +21,9 @@ export function useStacks() {
 
   const connectWallet = () => {
     showConnect({
-      appDetails: {
-        name: 'Checkers on Stacks',
-        icon: '/icon.png',
-      },
+      appDetails: { name: 'Checkers on Stacks', icon: '/icon.png' },
       redirectTo: '/',
-      onFinish: () => {
-        setUserData(userSession.loadUserData());
-      },
+      onFinish: () => setUserData(userSession.loadUserData()),
       userSession,
     });
   };
@@ -40,12 +33,7 @@ export function useStacks() {
     setUserData(null);
   };
 
-  return {
-    userData,
-    userSession,
-    network,
-    connectWallet,
-    disconnect,
-    isConnected: !!userData,
-  };
+  const address = userData?.profile?.stxAddress?.mainnet ?? null;
+
+  return { userData, userSession, network, connectWallet, disconnect, isConnected: !!userData, address };
 }
