@@ -1,221 +1,229 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useStacks } from '@/hooks/useStacks';
 import { useCheckers } from '@/hooks/useCheckers';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useState } from 'react';
-
-const BOARD_SIZE = 8;
-
-const PIECE_SYMBOLS = {
-  0: '',
-  1: '🔴', // Player 1
-  2: '👑', // Player 1 King
-  3: '⚫', // Player 2
-  4: '♛', // Player 2 King
-};
+import { getDefaultBoard, isP1Piece, isP2Piece } from '@/lib/board';
+import Board from '@/components/Board';
+import GameInfo from '@/components/GameInfo';
+import MoveHistory from '@/components/MoveHistory';
+import PieceCountBar from '@/components/PieceCountBar';
+import Toast from '@/components/Toast';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import Navbar from '@/components/Navbar';
 
 export default function Home() {
-  const { isConnected, userData, connectWallet, disconnect } = useStacks();
-  const { theme, toggleTheme } = useTheme();
+  const { isConnected, address } = useStacks();
+  const { theme } = useTheme();
   const [gameId, setGameId] = useState(0);
-  const { createGame, joinGame, makeMove, loading, gameState, boardState, refetch } = useCheckers(gameId);
-  
+  const [inputId, setInputId] = useState('0');
+  const {
+    createGame, joinGame, makeMove, offerDraw, acceptDraw, forfeit,
+    loading, gameState, boardState, moveHistory, error, refetch,
+  } = useCheckers(gameId);
+
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
+  const [toast, setToast] = useState<{ msg: string; type: 'info' | 'success' | 'error' } | null>(null);
 
-  // Initialize with default pieces if no game loaded
-  const displayBoard = boardState.some(p => p > 0) ? boardState : getDefaultBoard();
+  const showToast = (msg: string, type: 'info' | 'success' | 'error' = 'info') =>
+    setToast({ msg, type });
 
-  function getDefaultBoard() {
-    const board = Array(64).fill(0);
-    // Player 1 pieces (top)
-    [1, 3, 5, 7, 8, 10, 12, 14, 17, 19, 21, 23].forEach(pos => board[pos] = 1);
-    // Player 2 pieces (bottom)
-    [40, 42, 44, 46, 49, 51, 53, 55, 56, 58, 60, 62].forEach(pos => board[pos] = 3);
-    return board;
-  }
+  useEffect(() => {
+    if (error) showToast(error, 'error');
+  }, [error]);
 
-  const isDarkSquare = (row: number, col: number) => (row + col) % 2 === 1;
+  const board = boardState.some(p => p > 0) ? boardState : getDefaultBoard();
 
-  const handleSquareClick = (row: number, col: number) => {
-    const pos = row * 8 + col;
-    const piece = displayBoard[pos];
-    
+  const isMyTurn = () => {
+    if (!gameState || !address) return false;
+    return gameState['current-turn']?.value === address;
+  };
+
+  const canMovePiece = (pos: number) => {
+    const piece = board[pos];
+    if (!piece || !address) return false;
+    const p1 = gameState?.['player1']?.value;
+    const p2 = gameState?.['player2']?.value?.value;
+    if (p1 === address) return isP1Piece(piece);
+    if (p2 === address) return isP2Piece(piece);
+    return false;
+  };
+
+  const handleSquareClick = (pos: number) => {
+    if (loading || !isMyTurn()) {
+      if (!isMyTurn()) showToast("It's not your turn", 'error');
+      return;
+    }
+    const piece = board[pos];
+
     if (selectedSquare === null) {
-      if (piece > 0) {
-        setSelectedSquare(pos);
-      }
+      if (piece > 0 && canMovePiece(pos)) setSelectedSquare(pos);
+    } else if (pos === selectedSquare) {
+      setSelectedSquare(null);
+    } else if (piece > 0 && canMovePiece(pos)) {
+      setSelectedSquare(pos);
     } else {
-      if (pos === selectedSquare) {
-        setSelectedSquare(null);
-      } else {
-        makeMove(selectedSquare, pos);
-        setSelectedSquare(null);
-      }
+      makeMove(selectedSquare, pos);
+      setSelectedSquare(null);
     }
   };
 
-  const isMyTurn = () => {
-    if (!gameState || !userData) return false;
-    const myAddress = userData.profile.stxAddress.testnet;
-    return gameState['current-turn'].value === myAddress;
-  };
+  const p1Pieces = gameState?.['p1-pieces']?.value ?? 12;
+  const p2Pieces = gameState?.['p2-pieces']?.value ?? 12;
+  const winner = gameState?.['winner']?.value?.value;
+  const drawOffer = gameState?.['draw-offered-by']?.value?.value;
+  const canAcceptDraw = drawOffer && drawOffer !== address;
 
-  const getPlayerRole = () => {
-    if (!gameState || !userData) return null;
-    const myAddress = userData.profile.stxAddress.testnet;
-    if (gameState.player1.value === myAddress) return 'Player 1 (🔴)';
-    if (gameState.player2.value?.value === myAddress) return 'Player 2 (⚫)';
-    return 'Spectator';
-  };
+  const card = `backdrop-blur-lg rounded-xl p-5 border ${
+    theme === 'dark' ? 'bg-white/10 border-purple-500/30' : 'bg-white/80 border-purple-300'
+  }`;
 
   return (
     <main className="min-h-screen">
-      <nav className={`p-6 flex justify-between items-center border-b ${theme === 'dark' ? 'border-purple-500/30' : 'border-purple-300'}`}>
-        <h1 className="text-3xl font-bold">🕹️ Checkers on Stacks</h1>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={toggleTheme}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              theme === 'dark' 
-                ? 'bg-yellow-500 hover:bg-yellow-600 text-gray-900' 
-                : 'bg-gray-800 hover:bg-gray-900 text-white'
-            }`}
-          >
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-          {!isConnected ? (
-            <button
-              onClick={connectWallet}
-              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors text-white"
-            >
-              Connect Wallet
-            </button>
-          ) : (
-            <div className="flex items-center gap-4">
-              <span className="text-sm">{userData?.profile?.stxAddress?.testnet?.slice(0, 8)}...</span>
-              <button
-                onClick={disconnect}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-sm text-white"
-              >
-                Disconnect
-              </button>
-            </div>
-          )}
-        </div>
-      </nav>
+      <Navbar />
 
-      <div className="container mx-auto px-6 py-12 max-w-7xl">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {winner && (
+          <div className="mb-6 text-center text-2xl font-bold animate-pulse">
+            {winner === address ? '🏆 You Won! Congratulations!' : '💀 Game Over — Opponent Won'}
+          </div>
+        )}
+
         {!isConnected ? (
-          <div className="text-center py-20">
+          <div className="text-center py-24">
             <h2 className="text-4xl font-bold mb-4">Welcome to On-Chain Checkers</h2>
             <p className={`text-xl mb-8 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
               Connect your Stacks wallet to start playing
             </p>
+            <p className="text-sm opacity-50">Powered by Bitcoin finality via Stacks</p>
           </div>
         ) : (
-          <div className="flex flex-col lg:flex-row gap-8 items-start justify-center">
-            <div className={`backdrop-blur-lg rounded-xl p-6 border ${
-              theme === 'dark' 
-                ? 'bg-white/10 border-purple-500/30' 
-                : 'bg-white/80 border-purple-300'
-            }`}>
-              <h2 className="text-2xl font-bold mb-4">Game Controls</h2>
-              <div className="space-y-4">
+          <div className="flex flex-col xl:flex-row gap-6 items-start justify-center">
+            {/* Controls panel */}
+            <div className={`${card} w-full xl:w-72 shrink-0`}>
+              <h2 className="text-xl font-bold mb-4">Game Controls</h2>
+              <div className="space-y-3">
                 <button
-                  onClick={createGame}
+                  onClick={async () => {
+                    await createGame();
+                    showToast('Game created! Share your Game ID.', 'success');
+                  }}
                   disabled={loading}
-                  className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 rounded-lg transition-colors text-white"
+                  className="w-full px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
                 >
-                  {loading ? 'Creating...' : 'Create New Game'}
+                  {loading ? <LoadingSpinner size="sm" /> : '+ Create New Game'}
                 </button>
-                
-                <div>
+
+                <div className="space-y-2">
                   <input
                     type="number"
-                    value={gameId}
-                    onChange={(e) => setGameId(Number(e.target.value))}
-                    placeholder="Game ID"
-                    className={`w-full px-4 py-2 mb-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                    value={inputId}
+                    min={0}
+                    onChange={e => setInputId(e.target.value)}
+                    placeholder="Enter Game ID"
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm ${
                       theme === 'dark'
                         ? 'bg-black/30 border-purple-500/50 text-white'
                         : 'bg-white border-purple-300 text-gray-900'
                     }`}
                   />
-                  <button
-                    onClick={() => joinGame(gameId)}
-                    disabled={loading}
-                    className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 rounded-lg transition-colors mb-2 text-white"
-                  >
-                    {loading ? 'Joining...' : 'Join Game'}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        const id = parseInt(inputId);
+                        setGameId(id);
+                        joinGame(id);
+                      }}
+                      disabled={loading}
+                      className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-white text-sm transition-colors"
+                    >
+                      Join
+                    </button>
+                    <button
+                      onClick={() => setGameId(parseInt(inputId))}
+                      className={`flex-1 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        theme === 'dark'
+                          ? 'bg-gray-600 hover:bg-gray-500 text-white'
+                          : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
+                      }`}
+                    >
+                      Load
+                    </button>
+                  </div>
                   <button
                     onClick={refetch}
-                    className={`w-full px-4 py-2 rounded-lg transition-colors text-sm ${
+                    className={`w-full px-3 py-2 rounded-lg text-xs transition-colors ${
                       theme === 'dark'
-                        ? 'bg-gray-600 hover:bg-gray-700 text-white'
-                        : 'bg-gray-300 hover:bg-gray-400 text-gray-900'
+                        ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
                     }`}
                   >
-                    Refresh Game
+                    🔄 Refresh
                   </button>
                 </div>
 
-                {gameState && (
-                  <div className={`mt-6 p-4 rounded-lg space-y-2 text-sm ${
-                    theme === 'dark' ? 'bg-black/30' : 'bg-gray-100'
-                  }`}>
-                    <div><strong>Game ID:</strong> {gameId}</div>
-                    <div><strong>Status:</strong> {gameState['is-active']?.value ? '🟢 Active' : '⚪ Waiting'}</div>
-                    <div><strong>Your Role:</strong> {getPlayerRole()}</div>
-                    <div><strong>Turn:</strong> {isMyTurn() ? '✅ Your Turn' : '⏳ Opponent'}</div>
-                    <div className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-                      <strong>Pieces:</strong> {displayBoard.filter(p => p > 0).length} on board
-                    </div>
-                  </div>
+                {canAcceptDraw && (
+                  <button
+                    onClick={acceptDraw}
+                    disabled={loading}
+                    className="w-full px-4 py-2.5 bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 rounded-lg text-white text-sm"
+                  >
+                    🤝 Accept Draw Offer
+                  </button>
                 )}
+
+                <PieceCountBar p1Pieces={p1Pieces} p2Pieces={p2Pieces} />
+
+                <GameInfo
+                  gameId={gameId}
+                  gameState={gameState}
+                  boardState={board}
+                  onOfferDraw={offerDraw}
+                  onForfeit={forfeit}
+                  loading={loading}
+                />
               </div>
             </div>
 
-            <div className={`backdrop-blur-lg rounded-xl p-6 border ${
-              theme === 'dark' 
-                ? 'bg-white/10 border-purple-500/30' 
-                : 'bg-white/80 border-purple-300'
-            }`}>
-              <h2 className="text-2xl font-bold mb-4 text-center">Game Board</h2>
-              <div className="grid grid-cols-8 gap-0 w-fit mx-auto border-4 border-amber-900 shadow-2xl">
-                {Array.from({ length: BOARD_SIZE }).map((_, row) =>
-                  Array.from({ length: BOARD_SIZE }).map((_, col) => {
-                    const pos = row * 8 + col;
-                    const dark = isDarkSquare(row, col);
-                    const selected = selectedSquare === pos;
-                    const piece = displayBoard[pos];
-                    
-                    return (
-                      <div
-                        key={`${row}-${col}`}
-                        onClick={() => dark && handleSquareClick(row, col)}
-                        className={`
-                          w-16 h-16 flex items-center justify-center text-3xl
-                          ${dark ? 'bg-amber-900 cursor-pointer hover:bg-amber-800 active:bg-amber-700' : 'bg-amber-100'}
-                          ${selected ? 'ring-4 ring-yellow-400' : ''}
-                          transition-all duration-200
-                        `}
-                        title={`Pos: ${pos}, Piece: ${piece}`}
-                      >
-                        {PIECE_SYMBOLS[piece as keyof typeof PIECE_SYMBOLS]}
-                      </div>
-                    );
-                  })
-                )}
+            {/* Board */}
+            <div className={`${card} flex-1`}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">Game #{gameId}</h2>
+                <span className={`text-sm px-2 py-1 rounded-full ${
+                  isMyTurn() ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
+                }`}>
+                  {isMyTurn() ? '● Your Turn' : '○ Waiting'}
+                </span>
               </div>
-              <p className={`text-center mt-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                Click a piece, then click destination to make a move
+              <Board
+                board={board}
+                selectedSquare={selectedSquare}
+                lastCapture={null}
+                onSquareClick={handleSquareClick}
+                disabled={loading || !isMyTurn()}
+              />
+              <p className="text-center mt-3 text-xs opacity-50">
+                Click a piece to select, then click a destination square
               </p>
+            </div>
+
+            {/* Move history */}
+            <div className={`${card} w-full xl:w-56 shrink-0`}>
+              <h2 className="text-lg font-bold mb-3">Move History</h2>
+              <MoveHistory moves={moveHistory} />
             </div>
           </div>
         )}
       </div>
+
+      {toast && (
+        <Toast
+          message={toast.msg}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </main>
   );
 }
