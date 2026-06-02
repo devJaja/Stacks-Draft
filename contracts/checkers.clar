@@ -1,8 +1,9 @@
 ;; ============================================================
-;; Checkers / Draughts — On-Chain Game Contract
+;; Checkers / Draughts — On-Chain Game Contract v2
 ;; ============================================================
 ;; A fully on-chain two-player checkers game on Stacks.
-;; Supports diagonal moves, captures, king promotion.
+;; Supports diagonal moves, captures, king promotion,
+;; forfeit, draw offers, and piece-count tracking.
 ;;
 ;; Piece encoding:
 ;;   0 = empty, 1 = p1, 2 = p1-king, 3 = p2, 4 = p2-king
@@ -13,53 +14,18 @@
 ;; ============================================================
 ;; Error constants
 ;; ============================================================
-
-(define-constant err-game-not-found (err u100))
-(define-constant err-game-full (err u101))
-(define-constant err-not-your-turn (err u102))
-(define-constant err-invalid-move (err u103))
-(define-constant err-game-over (err u104))
-(define-constant err-not-player (err u105))
+(define-constant err-game-not-found   (err u100))
+(define-constant err-game-full        (err u101))
+(define-constant err-not-your-turn    (err u102))
+(define-constant err-invalid-move     (err u103))
+(define-constant err-game-over        (err u104))
+(define-constant err-not-player       (err u105))
 (define-constant err-invalid-position (err u106))
+(define-constant err-no-draw-offered  (err u107))
+(define-constant err-already-player   (err u108))
 
 ;; ============================================================
 ;; Piece-type constants
-;; ============================================================
-
-(define-constant piece-empty u0)
-(define-constant piece-p1 u1)
-(define-constant piece-p1-king u2)
-(define-constant piece-p2 u3)
-(define-constant piece-p2-king u4)
-
-;; ============================================================
-;; Board-geometry constants
-;; ============================================================
-
-(define-constant board-size u64)
-(define-constant promotion-row-p1 u56)
-(define-constant promotion-row-p2 u7)
-(define-constant step-diff-a u7)
-(define-constant step-diff-b u9)
-(define-constant capture-diff-a u14)
-(define-constant capture-diff-b u18)
-
-;; ============================================================
-;; State variables
-;; ============================================================
-;; ============================================================
-;; Error constants
-;; ============================================================
-(define-constant err-game-not-found  (err u100))
-(define-constant err-game-full       (err u101))
-(define-constant err-not-your-turn   (err u102))
-(define-constant err-invalid-move    (err u103))
-(define-constant err-game-over       (err u104))
-(define-constant err-not-player      (err u105))
-
-;; ============================================================
-;; Piece value constants
-;; piece encoding: u0=empty, u1=p1, u2=p1-king, u3=p2, u4=p2-king
 ;; ============================================================
 (define-constant piece-empty   u0)
 (define-constant piece-p1      u1)
@@ -68,18 +34,18 @@
 (define-constant piece-p2-king u4)
 
 ;; ============================================================
-;; Board geometry constants
+;; Board-geometry constants
 ;; ============================================================
-;; A capture jump spans 14 or 18 positions depending on the row parity
-(define-constant capture-diff-a u14)
-(define-constant capture-diff-b u18)
-
-;; Promotion thresholds
-(define-constant promotion-row-p1 u56) ;; p1 promotes at pos >= 56
-(define-constant promotion-row-p2 u7)  ;; p2 promotes at pos <= 7
+(define-constant board-size       u64)
+(define-constant promotion-row-p1 u56)
+(define-constant promotion-row-p2 u7)
+(define-constant step-diff-a      u7)
+(define-constant step-diff-b      u9)
+(define-constant capture-diff-a   u14)
+(define-constant capture-diff-b   u18)
 
 ;; ============================================================
-;; State
+;; State variables
 ;; ============================================================
 (define-data-var game-nonce uint u0)
 
@@ -90,15 +56,20 @@
 (define-map games
   uint
   {
-    player1:      principal,
-    player2:      (optional principal),
-    current-turn: principal,
-    winner:       (optional principal),
-    is-active:    bool
+    player1:       principal,
+    player2:       (optional principal),
+    current-turn:  principal,
+    winner:        (optional principal),
+    is-active:     bool,
+    move-count:    uint,
+    p1-pieces:     uint,
+    p2-pieces:     uint,
+    draw-offered-by: (optional principal),
+    created-at:    uint
   }
 )
 
-;; Board: pos -> piece (see piece-type constants above)
+;; Board: pos -> piece
 (define-map board
   { game-id: uint, pos: uint }
   uint
@@ -111,11 +82,16 @@
 (define-public (create-game)
   (let ((game-id (var-get game-nonce)))
     (map-set games game-id {
-      player1:      tx-sender,
-      player2:      none,
-      current-turn: tx-sender,
-      winner:       none,
-      is-active:    false
+      player1:       tx-sender,
+      player2:       none,
+      current-turn:  tx-sender,
+      winner:        none,
+      is-active:     false,
+      move-count:    u0,
+      p1-pieces:     u12,
+      p2-pieces:     u12,
+      draw-offered-by: none,
+      created-at:    block-height
     })
     (init-board game-id)
     (var-set game-nonce (+ game-id u1))
@@ -126,7 +102,7 @@
 (define-public (join-game (game-id uint))
   (let ((game (unwrap! (map-get? games game-id) err-game-not-found)))
     (asserts! (is-none (get player2 game)) err-game-full)
-    (asserts! (not (is-eq tx-sender (get player1 game))) err-game-full)
+    (asserts! (not (is-eq tx-sender (get player1 game))) err-already-player)
     (map-set games game-id (merge game {
       player2:   (some tx-sender),
       is-active: true
@@ -137,221 +113,80 @@
 
 (define-public (move (game-id uint) (from uint) (to uint))
   (let (
-    (game (unwrap! (map-get? games game-id) err-game-not-found))
-    (piece (unwrap! (map-get? board {game-id: game-id, pos: from}) err-invalid-move))
-    (target (default-to piece-empty (map-get? board {game-id: game-id, pos: to})))
-  )
-    (asserts! (get is-active game) err-game-over)
-    (asserts! (is-eq tx-sender (get current-turn game)) err-not-your-turn)
-    (asserts! (> piece piece-empty) err-invalid-move)
-    (asserts! (is-eq target piece-empty) err-invalid-move)
-    (asserts! (owns-piece game piece) err-not-your-turn)
-    (asserts! (is-valid-position from) err-invalid-position)
-    (asserts! (is-valid-position to) err-invalid-position)
-    (asserts! (is-valid-move from to) err-invalid-move)
-    
-    (let ((promoted (promote-if-needed piece to)))
-      (map-set board {game-id: game-id, pos: to} promoted)
-      (map-set board {game-id: game-id, pos: from} piece-empty)
-      
-      (if (is-capture from to)
-        (map-set board {game-id: game-id, pos: (get-mid from to)} piece-empty)
     (game   (unwrap! (map-get? games game-id) err-game-not-found))
     (piece  (unwrap! (map-get? board { game-id: game-id, pos: from }) err-invalid-move))
     (target (default-to piece-empty (map-get? board { game-id: game-id, pos: to })))
   )
-    (asserts! (get is-active game)                        err-game-over)
-    (asserts! (is-eq tx-sender (get current-turn game))   err-not-your-turn)
-    (asserts! (> piece piece-empty)                       err-invalid-move)
-    (asserts! (is-eq target piece-empty)                  err-invalid-move)
-    (asserts! (owns-piece game piece)   err-not-your-turn)
-    ;; Reject any move that is not a legal diagonal step or capture jump
-    (asserts! (is-valid-move from to)   err-invalid-move)
+    (asserts! (get is-active game)                       err-game-over)
+    (asserts! (is-eq tx-sender (get current-turn game))  err-not-your-turn)
+    (asserts! (> piece piece-empty)                      err-invalid-move)
+    (asserts! (is-eq target piece-empty)                 err-invalid-move)
+    (asserts! (owns-piece game piece)                    err-not-your-turn)
+    (asserts! (is-valid-position from)                   err-invalid-position)
+    (asserts! (is-valid-position to)                     err-invalid-position)
+    (asserts! (is-valid-move from to)                    err-invalid-move)
 
-    (let ((promoted (promote-if-needed piece to)))
+    (let (
+      (promoted    (promote-if-needed piece to))
+      (capturing   (is-capture from to))
+      (new-p1      (get p1-pieces game))
+      (new-p2      (get p2-pieces game))
+    )
       (map-set board { game-id: game-id, pos: to }   promoted)
       (map-set board { game-id: game-id, pos: from } piece-empty)
 
-      ;; Remove captured piece on a jump
-      (if (is-capture from to)
-        (map-set board { game-id: game-id, pos: (get-mid from to) } piece-empty)
-        true
+      (let (
+        (updated-p1 (if (and capturing (or (is-eq piece piece-p2) (is-eq piece piece-p2-king)))
+                      (if (> new-p1 u0) (- new-p1 u1) u0) new-p1))
+        (updated-p2 (if (and capturing (or (is-eq piece piece-p1) (is-eq piece piece-p1-king)))
+                      (if (> new-p2 u0) (- new-p2 u1) u0) new-p2))
       )
+        (if capturing
+          (map-set board { game-id: game-id, pos: (get-mid from to) } piece-empty)
+          true
+        )
 
-      (map-set games game-id (merge game {
-        current-turn: (get-next-player game)
-      }))
-      (ok true)
+        (map-set games game-id (merge game {
+          current-turn:    (get-next-player game),
+          move-count:      (+ (get move-count game) u1),
+          p1-pieces:       updated-p1,
+          p2-pieces:       updated-p2,
+          draw-offered-by: none
+        }))
+        (ok true)
+      )
     )
   )
 )
 
-;; ============================================================
-;; Board initialisation
-;; ============================================================
-
-(define-private (init-board (game-id uint))
-  (begin
-    (init-p1-pieces game-id)
-    (init-p2-pieces game-id)
-  )
-)
-
-;; Player 1 starting positions: rows 1-3
-(define-private (init-p1-pieces (game-id uint))
-  (begin
-    (map-set board {game-id: game-id, pos: u1} piece-p1)
-    (map-set board {game-id: game-id, pos: u3} piece-p1)
-    (map-set board {game-id: game-id, pos: u5} piece-p1)
-    (map-set board {game-id: game-id, pos: u7} piece-p1)
-    (map-set board {game-id: game-id, pos: u8} piece-p1)
-    (map-set board {game-id: game-id, pos: u10} piece-p1)
-    (map-set board {game-id: game-id, pos: u12} piece-p1)
-    (map-set board {game-id: game-id, pos: u14} piece-p1)
-    (map-set board {game-id: game-id, pos: u17} piece-p1)
-    (map-set board {game-id: game-id, pos: u19} piece-p1)
-    (map-set board {game-id: game-id, pos: u21} piece-p1)
-    (map-set board {game-id: game-id, pos: u23} piece-p1)
-    true
-  )
-)
-
-;; Player 2 starting positions: rows 6-8
-(define-private (init-p2-pieces (game-id uint))
-  (begin
-    (map-set board {game-id: game-id, pos: u40} piece-p2)
-    (map-set board {game-id: game-id, pos: u42} piece-p2)
-    (map-set board {game-id: game-id, pos: u44} piece-p2)
-    (map-set board {game-id: game-id, pos: u46} piece-p2)
-    (map-set board {game-id: game-id, pos: u49} piece-p2)
-    (map-set board {game-id: game-id, pos: u51} piece-p2)
-    (map-set board {game-id: game-id, pos: u53} piece-p2)
-    (map-set board {game-id: game-id, pos: u55} piece-p2)
-    (map-set board {game-id: game-id, pos: u56} piece-p2)
-    (map-set board {game-id: game-id, pos: u58} piece-p2)
-    (map-set board {game-id: game-id, pos: u60} piece-p2)
-    (map-set board {game-id: game-id, pos: u62} piece-p2)
-    true
-  )
-)
-
-;; True if tx-sender owns the given piece type
-(define-private (owns-piece
-  (game {
-    player1: principal, player2: (optional principal),
-    current-turn: principal, winner: (optional principal), is-active: bool
-  })
-  (piece uint))
-  (if (is-eq tx-sender (get player1 game))
-    (or (is-eq piece piece-p1) (is-eq piece piece-p1-king))
-    (or (is-eq piece piece-p2) (is-eq piece piece-p2-king))
-  )
-)
-
-;; ============================================================
-;; Private helpers
-;; ============================================================
-
-;; True if the position index is within the 8x8 board
-(define-private (is-valid-position (pos uint))
-  (< pos board-size)
-)
-
-;; True if the move distance is a legal step or capture jump
-(define-private (is-valid-move (from uint) (to uint))
-  (let ((diff (abs-diff from to)))
-    (or
-      (is-eq diff step-diff-a)
-      (is-eq diff step-diff-b)
-      (is-eq diff capture-diff-a)
-      (is-eq diff capture-diff-b)
-    )
-  )
-)
-
-;; Returns the absolute difference between two uint values
-(define-private (abs-diff (a uint) (b uint))
-  (if (> a b) (- a b) (- b a))
-)
-
-;; True if the move distance matches a capture/jump span
-(define-private (is-capture (from uint) (to uint))
-  (let ((diff (abs-diff from to)))
-    (or (is-eq diff capture-diff-a) (is-eq diff capture-diff-b))
-  )
-)
-
-;; Returns the midpoint position between two board squares
-(define-private (get-mid (from uint) (to uint))
-  (/ (+ from to) u2)
-)
-
-;; Promotes a piece to king if it has reached the opposing back rank
-(define-private (promote-if-needed (piece uint) (pos uint))
-  (if (and (is-eq piece piece-p1) (>= pos promotion-row-p1))
-    piece-p1-king
-    (if (and (is-eq piece piece-p2) (<= pos promotion-row-p2))
-      piece-p2-king
-      piece
-    )
-  )
-)
-
-;; Returns the opponent of tx-sender in the game
-(define-private (get-opponent
-  (game {
-    player1: principal, player2: (optional principal),
-    current-turn: principal, winner: (optional principal), is-active: bool
-  }))
-  (if (is-eq tx-sender (get player1 game))
-    (unwrap-panic (get player2 game))
-    (get player1 game)
-  )
-)
-
-;; True if tx-sender is either player in the game
-(define-private (is-participant
-  (game {
-    player1: principal, player2: (optional principal),
-    current-turn: principal, winner: (optional principal), is-active: bool
-  }))
-  (or
-    (is-eq tx-sender (get player1 game))
-    (is-eq tx-sender (unwrap-panic (get player2 game)))
-  )
-)
-
-;; Returns the player whose turn comes next
-(define-private (get-next-player
-  (game {
-    player1: principal, player2: (optional principal),
-    current-turn: principal, winner: (optional principal), is-active: bool
-  }))
-  (if (is-eq (get current-turn game) (get player1 game))
-    (unwrap-panic (get player2 game))
-    (get player1 game)
-  )
-)
-;; Allows a player to forfeit an active game, awarding the win to the opponent
-(define-public (forfeit-game (game-id uint))
+;; Offer a draw to the opponent
+(define-public (offer-draw (game-id uint))
   (let ((game (unwrap! (map-get? games game-id) err-game-not-found)))
     (asserts! (get is-active game) err-game-over)
     (asserts! (is-participant game) err-not-player)
-    (let ((opponent (get-opponent game)))
-      (map-set games game-id (merge game {
-        is-active: false,
-        winner:    (some opponent)
-      }))
-      (ok opponent)
-    )
+    (map-set games game-id (merge game {
+      draw-offered-by: (some tx-sender)
+    }))
+    (ok true)
   )
 )
 
-;; ============================================================
-;; Read-only functions
-;; ============================================================
+;; Accept a draw offer — ends game with no winner
+(define-public (accept-draw (game-id uint))
+  (let ((game (unwrap! (map-get? games game-id) err-game-not-found)))
+    (asserts! (get is-active game) err-game-over)
+    (asserts! (is-some (get draw-offered-by game)) err-no-draw-offered)
+    (asserts! (not (is-eq (some tx-sender) (get draw-offered-by game))) err-not-player)
+    (asserts! (is-participant game) err-not-player)
+    (map-set games game-id (merge game {
+      is-active: false,
+      winner:    none
+    }))
+    (ok true)
+  )
+)
 
-;; Allows a player to forfeit an active game
+;; Forfeit — awards win to opponent
 (define-public (forfeit-game (game-id uint))
   (let ((game (unwrap! (map-get? games game-id) err-game-not-found)))
     (asserts! (get is-active game) err-game-over)
@@ -375,7 +210,6 @@
 )
 
 (define-read-only (get-piece (game-id uint) (pos uint))
-  (default-to piece-empty (map-get? board {game-id: game-id, pos: pos}))
   (default-to piece-empty (map-get? board { game-id: game-id, pos: pos }))
 )
 
@@ -383,6 +217,24 @@
   (let ((piece (get-piece game-id pos)))
     (or (is-eq piece piece-p1-king) (is-eq piece piece-p2-king))
   )
+)
+
+(define-read-only (get-move-count (game-id uint))
+  (match (map-get? games game-id)
+    game (get move-count game)
+    u0
+  )
+)
+
+(define-read-only (get-piece-counts (game-id uint))
+  (match (map-get? games game-id)
+    game (ok { p1: (get p1-pieces game), p2: (get p2-pieces game) })
+    err-game-not-found
+  )
+)
+
+(define-read-only (get-total-games)
+  (var-get game-nonce)
 )
 
 (define-read-only (get-board (game-id uint))
@@ -410,16 +262,14 @@
 ;; Private helpers
 ;; ============================================================
 
-;; Returns the absolute difference between two positions
+(define-private (is-valid-position (pos uint))
+  (< pos board-size)
+)
+
 (define-private (abs-diff (a uint) (b uint))
   (if (> a b) (- a b) (- b a))
 )
 
-;; Single-step distances on the checkers board (diagonal adjacency)
-(define-constant step-diff-a u7)
-(define-constant step-diff-b u9)
-
-;; A move is valid if the distance is a single step (7 or 9) or a capture jump (14 or 18)
 (define-private (is-valid-move (from uint) (to uint))
   (let ((diff (abs-diff from to)))
     (or
@@ -431,23 +281,32 @@
   )
 )
 
-;; A move is a capture if the distance matches a jump span
 (define-private (is-capture (from uint) (to uint))
   (let ((diff (abs-diff from to)))
     (or (is-eq diff capture-diff-a) (is-eq diff capture-diff-b))
   )
 )
 
-;; Returns the position of the piece being jumped over
 (define-private (get-mid (from uint) (to uint))
   (/ (+ from to) u2)
 )
 
-;; True if tx-sender owns the given piece
+(define-private (promote-if-needed (piece uint) (pos uint))
+  (if (and (is-eq piece piece-p1) (>= pos promotion-row-p1))
+    piece-p1-king
+    (if (and (is-eq piece piece-p2) (<= pos promotion-row-p2))
+      piece-p2-king
+      piece
+    )
+  )
+)
+
 (define-private (owns-piece
   (game {
     player1: principal, player2: (optional principal),
-    current-turn: principal, winner: (optional principal), is-active: bool
+    current-turn: principal, winner: (optional principal), is-active: bool,
+    move-count: uint, p1-pieces: uint, p2-pieces: uint,
+    draw-offered-by: (optional principal), created-at: uint
   })
   (piece uint))
   (if (is-eq tx-sender (get player1 game))
@@ -456,23 +315,25 @@
   )
 )
 
-;; True if tx-sender is either player in the game
 (define-private (is-participant
   (game {
     player1: principal, player2: (optional principal),
-    current-turn: principal, winner: (optional principal), is-active: bool
+    current-turn: principal, winner: (optional principal), is-active: bool,
+    move-count: uint, p1-pieces: uint, p2-pieces: uint,
+    draw-offered-by: (optional principal), created-at: uint
   }))
   (or
     (is-eq tx-sender (get player1 game))
-    (is-eq tx-sender (unwrap-panic (get player2 game)))
+    (is-eq (some tx-sender) (get player2 game))
   )
 )
 
-;; Returns the opponent of tx-sender
 (define-private (get-opponent
   (game {
     player1: principal, player2: (optional principal),
-    current-turn: principal, winner: (optional principal), is-active: bool
+    current-turn: principal, winner: (optional principal), is-active: bool,
+    move-count: uint, p1-pieces: uint, p2-pieces: uint,
+    draw-offered-by: (optional principal), created-at: uint
   }))
   (if (is-eq tx-sender (get player1 game))
     (unwrap-panic (get player2 game))
@@ -480,26 +341,16 @@
   )
 )
 
-;; Returns the player whose turn comes next
 (define-private (get-next-player
   (game {
     player1: principal, player2: (optional principal),
-    current-turn: principal, winner: (optional principal), is-active: bool
+    current-turn: principal, winner: (optional principal), is-active: bool,
+    move-count: uint, p1-pieces: uint, p2-pieces: uint,
+    draw-offered-by: (optional principal), created-at: uint
   }))
   (if (is-eq (get current-turn game) (get player1 game))
     (unwrap-panic (get player2 game))
     (get player1 game)
-  )
-)
-
-;; Promotes a piece to king if it has reached the back rank
-(define-private (promote-if-needed (piece uint) (pos uint))
-  (if (and (is-eq piece piece-p1) (>= pos promotion-row-p1))
-    piece-p1-king
-    (if (and (is-eq piece piece-p2) (<= pos promotion-row-p2))
-      piece-p2-king
-      piece
-    )
   )
 )
 
@@ -514,7 +365,7 @@
   )
 )
 
-;; Player 1 starts on rows 1-3 (positions 1,3,5,7,8,10,12,14,17,19,21,23)
+;; Player 1 starts on rows 0-2 (dark squares)
 (define-private (init-p1-pieces (game-id uint))
   (begin
     (map-set board { game-id: game-id, pos: u1  } piece-p1)
@@ -533,7 +384,7 @@
   )
 )
 
-;; Player 2 starts on rows 6-8 (positions 40,42,44,46,49,51,53,55,56,58,60,62)
+;; Player 2 starts on rows 5-7 (dark squares)
 (define-private (init-p2-pieces (game-id uint))
   (begin
     (map-set board { game-id: game-id, pos: u40 } piece-p2)
